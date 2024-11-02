@@ -14,6 +14,7 @@ This project is a PowerShell script for automatically installing Spotify and Spi
 1. Download the `install_spotify.ps1` file.
 2. Run PowerShell as NOT Administrator.
 3. Select your desired options from the displayed menu.
+4. You can download `Spotify marketplace configs.json` file and import to Marketplace Settings after you install Spicetify.
 
 ## Requirements
 - PowerShell 5.0 or higher
