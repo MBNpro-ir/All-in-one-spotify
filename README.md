@@ -1,2 +1,20 @@
-# All in one spotify
- This project is a PowerShell script for automatically installing Spotify and Spicetify along with some useful extensions.
+# Spotify Installer
+
+This project is a PowerShell script for automatically installing Spotify and Spicetify along with some useful extensions.
+
+## Features
+
+- Automatic installation of Spotify
+- Installation of Spicetify CLI
+- Configuration of Spicetify extensions
+- Option to clean up downloaded files
+
+## How to Use
+
+1. Download the `install_spotify.ps1` file.
+2. Run PowerShell as NOT Administrator.
+3. Select your desired options from the displayed menu.
+
+## Requirements
+- PowerShell 5.0 or higher
+- Internet access to download the software
