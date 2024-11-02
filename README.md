@@ -1,4 +1,4 @@
-# Spotify Installer
+# Spotify - Spicetify Installer
 
 This project is a PowerShell script for automatically installing Spotify and Spicetify along with some useful extensions.
 
