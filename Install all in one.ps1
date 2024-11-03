@@ -67,7 +67,6 @@ function Cleanup-Downloads {
         Show-Status "Extensions cleaned up."
     }
 }
-
 function Install-Spotify {
     $spotifyPath = "$env:APPDATA\Spotify"
     $installerPath = "$env:TEMP\SpotifyFullSetup.exe"
@@ -127,7 +126,6 @@ function Install-Spicetify {
         Show-Error "Failed to download or install Spicetify CLI."
     }
 }
-
 function Install-Extension {
     param (
         [string]$extensionUrl,
@@ -169,12 +167,13 @@ function Execute-All {
     Apply-SpicetifyConfigs
     Show-Status "All installation and configuration steps completed."
 }
-
 function Uninstall-Spotify {
     try {
-        $app = Get-WmiObject -Query "SELECT * FROM Win32_Product WHERE Name = 'Spotify'" -ErrorAction Stop
-        if ($app) {
-            $app.Uninstall()
+        $spotifyPath = "$env:APPDATA\Spotify"
+        if (Test-Path $spotifyPath) {
+            Stop-Process -Name "Spotify" -Force -ErrorAction SilentlyContinue
+            
+            Remove-Item -Path $spotifyPath -Recurse -Force -ErrorAction Stop
             Show-Status "Spotify uninstalled successfully."
         } else {
             Show-Error "Spotify is not installed."
@@ -229,7 +228,6 @@ function Show-UninstallMenu {
         }
     } while ($true)
 }
-
 function Show-Menu {
     do {
         Write-Host "========================="
