@@ -85,6 +85,9 @@ function Install-Spicetify {
         if (-Not (Test-SpicetifyInstallation $spicetifyPath)) {
             Show-Status "Downloading and installing Spicetify CLI..."
             Invoke-WebRequest -Uri https://raw.githubusercontent.com/spicetify/cli/main/install.ps1 -UseBasicParsing | Invoke-Expression
+			Show-Status "Fixing known BUGS!!."
+			spicetify config sidebar_config 0
+			spicetify apply
             Show-Status "Spicetify CLI installed."
         } else {
             Show-Status "Spicetify CLI is already installed."
