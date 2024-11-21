@@ -21,3 +21,7 @@ This project is a PowerShell script for automatically installing Spotify and Spi
 - Internet access to download the software
 
 ![image](https://github.com/user-attachments/assets/4ff8b164-c360-4e78-a582-0e94d86d5232)
+
+## Problems :
+Is spotify shows a black screen, on the taskbar right click on spotify and on the Troubleshooting section click reload.
+![image](https://github.com/user-attachments/assets/c541b0df-3430-40ae-9d37-09baf1a3aabe)
