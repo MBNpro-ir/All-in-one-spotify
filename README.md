@@ -2,6 +2,8 @@
 
 This project is a PowerShell script for automatically installing Spotify and Spicetify along with some useful extensions.
 
+![image](https://github.com/user-attachments/assets/fbfc98b3-ce17-4d66-a3e2-956dabd2a226)
+
 ## Features
 
 - Automatic installation of Spotify
@@ -12,8 +14,6 @@ This project is a PowerShell script for automatically installing Spotify and Spi
 ## Requirements
 - PowerShell 5.0 or higher
 - Internet access to download the software
-
-![image](https://github.com/user-attachments/assets/4ff8b164-c360-4e78-a582-0e94d86d5232)
 
 ## How to Use
 
