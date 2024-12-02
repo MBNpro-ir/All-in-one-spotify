@@ -237,7 +237,10 @@ function Spicetify-Restore {
 
 function Spicetify-Update {
     try {
+		spicetify update
         spicetify restore backup apply
+		spicetify backup apply
+		spicetify apply
         Show-Status "spicetify update configured."
     } catch {
         Show-Error "Failed to configure spicetify update."
@@ -323,7 +326,7 @@ function Show-MainMenu {
         Write-Host "3. Extensions Menu"
         Write-Host "4. Spicetify Apply ( Apply after installing extentions )"
         Write-Host "5. Spicetify Restore ( disable Spicetify )"
-        Write-Host "6. Spicetify Update ( after spotify updates )"		
+        Write-Host "6. Spicetify Update ( after Spicetify updates )"		
         Write-Host "7. Uninstall Menu"
         Write-Host "8. Exit"
         Write-Host "========================="
