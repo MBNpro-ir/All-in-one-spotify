@@ -35,7 +35,7 @@ To change the execution policy, you can use the **Set-ExecutionPolicy** command.
      Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
      ```
 
-3. If prompted for confirmation, type `Y` and press Enter.
+3. If prompted for confirmation, type `Y` and If prompted for Install.all.in.one.ps1, type `R`.
 
 ### Check the current policy
 To see the current **Execution Policy** settings, use this command:
