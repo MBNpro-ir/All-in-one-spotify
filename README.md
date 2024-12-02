@@ -67,6 +67,6 @@ Get-ExecutionPolicy -List
 - If you set the policy to **Unrestricted**, remember to revert it to a safer policy after completing your work.
 
 ## Problems :
-If spotify shows a black screen, on the taskbar right click on spotify and on the Troubleshooting section click reload.
+If spotify shows a black screen, on the taskbar right click on spotify and on the Troubleshooting section click reload.(This is spicetify bug)
 
 ![image](https://github.com/user-attachments/assets/6c5ebff9-1d70-4ecc-a68c-277e72fa89bb)
