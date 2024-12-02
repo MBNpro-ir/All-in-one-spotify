@@ -2,6 +2,31 @@
 
 This project is a PowerShell script for automatically installing Spotify and Spicetify along with some useful extensions.
 
+## Features
+
+- Automatic installation of Spotify
+- Installation of Spicetify CLI
+- Configuration of Spicetify extensions
+- Option to clean up downloaded files
+
+## How to Use
+
+1. Download the `install_spotify.ps1` file.
+2. Right-click the `install_spotify.ps1` file and select Run with PowerShell. (Be sure its NOT running as administrator.)
+3. Select your desired options from the displayed menu.
+4. download the `Spotify marketplace configs.json` file and import it to Marketplace Settings after you install Spicetify. This file includes premium features that can be only enable on premium account.
+
+## Requirements
+- PowerShell 5.0 or higher
+- Internet access to download the software
+
+![image](https://github.com/user-attachments/assets/4ff8b164-c360-4e78-a582-0e94d86d5232)
+
+## Problems :
+If spotify shows a black screen, on the taskbar right click on spotify and on the Troubleshooting section click reload.
+
+![image](https://github.com/user-attachments/assets/6c5ebff9-1d70-4ecc-a68c-277e72fa89bb)
+
 ## How to install On Windows 11?
 
 In windows 11 there is an issue in PowerShell that occurs when script execution is restricted due to the system's execution policy. By default, Windows applies an execution policy that prevents untrusted scripts from running to protect system security. The error message typically looks like this:
@@ -46,28 +71,3 @@ Get-ExecutionPolicy -List
 ### Security Tips
 - Always use **RemoteSigned** or **AllSigned** policies unless you're in a testing environment.
 - If you set the policy to **Unrestricted**, remember to revert it to a safer policy after completing your work.
-
-## Features
-
-- Automatic installation of Spotify
-- Installation of Spicetify CLI
-- Configuration of Spicetify extensions
-- Option to clean up downloaded files
-
-## How to Use
-
-1. Download the `install_spotify.ps1` file.
-2. Right-click the `install_spotify.ps1` file and select Run with PowerShell. (Be sure its NOT running as administrator.)
-3. Select your desired options from the displayed menu.
-4. download the `Spotify marketplace configs.json` file and import it to Marketplace Settings after you install Spicetify. This file includes premium features that can be only enable on premium account.
-
-## Requirements
-- PowerShell 5.0 or higher
-- Internet access to download the software
-
-![image](https://github.com/user-attachments/assets/4ff8b164-c360-4e78-a582-0e94d86d5232)
-
-## Problems :
-If spotify shows a black screen, on the taskbar right click on spotify and on the Troubleshooting section click reload.
-
-![image](https://github.com/user-attachments/assets/6c5ebff9-1d70-4ecc-a68c-277e72fa89bb)
