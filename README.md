@@ -9,7 +9,6 @@ This project is a PowerShell script for automatically installing Spotify and Spi
 - Automatic installation of Spotify
 - Installation of Spicetify CLI
 - Configuration of Spicetify extensions
-- Option to clean up downloaded files
 
 ## Requirements
 - PowerShell 5.0 or higher
@@ -22,7 +21,7 @@ This project is a PowerShell script for automatically installing Spotify and Spi
 3. Select your desired options from the displayed menu.
 4. download the `Spotify marketplace configs.json` file and import it to Marketplace Settings after you install Spicetify. This file includes premium features that can be only enable on premium account.
 
-## How to install On Windows 11?
+## How to Use On Windows 11?
 
 In windows 11 there is an issue in PowerShell that occurs when script execution is restricted due to the system's execution policy. By default, Windows applies an execution policy that prevents untrusted scripts from running to protect system security. The error message typically looks like this:
 
