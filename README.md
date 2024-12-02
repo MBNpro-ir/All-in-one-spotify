@@ -2,7 +2,7 @@
 
 This project is a PowerShell script for automatically installing Spotify and Spicetify along with some useful extensions.
 
-## How to install?
+## How to install On Windows 11?
 
 In windows 11 there is an issue in PowerShell that occurs when script execution is restricted due to the system's execution policy. By default, Windows applies an execution policy that prevents untrusted scripts from running to protect system security. The error message typically looks like this:
 
