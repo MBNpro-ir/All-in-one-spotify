@@ -1,4 +1,4 @@
-# Spotify - Spicetify Installer
+![image](https://github.com/user-attachments/assets/93f86527-4f5b-47ea-bb09-d0b34e92de13)# Spotify - Spicetify Installer
 
 This project is a PowerShell script for automatically installing Spotify and Spicetify along with some useful extensions.
 
@@ -61,6 +61,13 @@ To see the current **Execution Policy** settings, use this command:
 ```powershell
 Get-ExecutionPolicy -List
 ```
+
+## Spotify.marketplace.configs.json
+1.![image](https://github.com/user-attachments/assets/9c39695e-692c-49b0-98a2-f5d5f8490e71)
+2.![image](https://github.com/user-attachments/assets/f4a5a889-d4a6-4791-85ca-98614fc121eb)
+3.![image](https://github.com/user-attachments/assets/264dff88-0521-4668-ab74-38d3df23e4be)
+4.![image](https://github.com/user-attachments/assets/332589ad-ecd6-4940-9479-48de9e3481e9)
+5.![image](https://github.com/user-attachments/assets/c1483ed3-2a28-4dee-8938-7236ffad2cbb)
 
 ### Security Tips
 - Always use **RemoteSigned** or **AllSigned** policies unless you're in a testing environment.
