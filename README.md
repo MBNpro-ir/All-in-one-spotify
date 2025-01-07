@@ -1,5 +1,3 @@
-![image](https://github.com/user-attachments/assets/93f86527-4f5b-47ea-bb09-d0b34e92de13)# Spotify - Spicetify Installer
-
 This project is a PowerShell script for automatically installing Spotify and Spicetify along with some useful extensions.
 
 ![image](https://github.com/user-attachments/assets/fbfc98b3-ce17-4d66-a3e2-956dabd2a226)
