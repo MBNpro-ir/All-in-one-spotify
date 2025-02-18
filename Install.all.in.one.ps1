@@ -1,4 +1,4 @@
-﻿﻿function Format-LanguageCode {
+﻿﻿﻿function Format-LanguageCode {
     [CmdletBinding()]
     [OutputType([string])]
     param
