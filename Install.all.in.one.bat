@@ -1,6 +1,6 @@
 @echo off
 set param=
-set url='https://github.com/MBNpro-ir/All-in-one-spotify/releases/download/V2.0.0/Install.all.in.one.ps1'
+set url='https://github.com/MBNpro-ir/All-in-one-spotify/blob/main/Install.all.in.one.ps1'
 
 :: mirror URL
 set url2='https://raw.githubusercontent.com/MBNpro-ir/All-in-one-spotify/main/Install.all.in.one.ps1'
