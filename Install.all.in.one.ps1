@@ -1,4 +1,4 @@
-﻿function Format-LanguageCode {
+function Format-LanguageCode {
     [CmdletBinding()]
     [OutputType([string])]
     param
@@ -119,6 +119,19 @@ function Get-WebData {
     return $null
 }
 
+function Format-String {
+    param(
+        [string] $template,
+        [object[]] $arguments
+    )
+    $result = $template
+    for ($i = 0; $i -lt $arguments.Length; $i++) {
+        $placeholder = "{${i}}"
+        $value = $arguments[$i]
+        $result = $result -replace [regex]::Escape($placeholder), $value
+    }
+    return $result
+}
 
 function incorrectValue {
     Write-Host ($lang).Incorrect "" -ForegroundColor Red -NoNewline
@@ -149,18 +162,50 @@ function Unlock-Folder {
         }
     }
 }
-function Format-String {
-    param(
-        [string] $template,
-        [object[]] $arguments
+
+function Stop-Spotify {
+    param (
+        [int]$maxAttempts = 5
     )
-    $result = $template
-    for ($i = 0; $i -lt $arguments.Length; $i++) {
-        $placeholder = "{${i}}"
-        $value = $arguments[$i]
-        $result = $result -replace [regex]::Escape($placeholder), $value
+
+    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+        $allProcesses = Get-Process -ErrorAction SilentlyContinue
+
+        $spotifyProcesses = $allProcesses | Where-Object { $_.ProcessName -like "*spotify*" }
+
+        if ($spotifyProcesses) {
+            foreach ($process in $spotifyProcesses) {
+                try {
+                    Stop-Process -Id $process.Id -Force
+                }
+                catch {
+                }
+            }
+            Start-Sleep -Seconds 1
+        }
+        else {
+            break
+        }
     }
-    return $result
+
+    if ($attempt -gt $maxAttempts) {
+        Write-Host "The maximum number of attempts to terminate a process has been reached."
+    }
+}
+
+function DesktopFolder {
+    $ErrorActionPreference = 'SilentlyContinue'
+    if (Test-Path "$env:USERPROFILE\Desktop") {
+        $desktop_folder = "$env:USERPROFILE\Desktop"
+    }
+
+    $regedit_desktop_folder = Get-ItemProperty -Path "Registry::HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\"
+    $regedit_desktop = $regedit_desktop_folder.'{754AC886-DF64-4CBA-86B5-F7FBF4FBCEF5}'
+
+    if (-not (Test-Path "$env:USERPROFILE\Desktop")) {
+        $desktop_folder = $regedit_desktop
+    }
+    return $desktop_folder
 }
 
 function downloadSp() {
@@ -235,89 +280,44 @@ function downloadSp() {
     }
 }
 
-function DesktopFolder {
-    $ErrorActionPreference = 'SilentlyContinue'
-    if (Test-Path "$env:USERPROFILE\Desktop") {
-        $desktop_folder = "$env:USERPROFILE\Desktop"
-    }
-
-    $regedit_desktop_folder = Get-ItemProperty -Path "Registry::HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\"
-    $regedit_desktop = $regedit_desktop_folder.'{754AC886-DF64-4CBA-86B5-F7FBF4FBCEF5}'
-
-    if (-not (Test-Path "$env:USERPROFILE\Desktop")) {
-        $desktop_folder = $regedit_desktop
-    }
-    return $desktop_folder
-}
-
-function Stop-Spotify {
+function Remove-Json {
     param (
-        [int]$maxAttempts = 5
+        [Parameter(Mandatory = $true)]
+        [Alias("j")]
+        [PSObject]$Json,
+
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
+        [Alias("p")]
+        [string[]]$Properties
     )
 
-    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-        $allProcesses = Get-Process -ErrorAction SilentlyContinue
-
-        $spotifyProcesses = $allProcesses | Where-Object { $_.ProcessName -like "*spotify*" }
-
-        if ($spotifyProcesses) {
-            foreach ($process in $spotifyProcesses) {
-                try {
-                    Stop-Process -Id $process.Id -Force
-                }
-                catch {
-                    # Ignore NoSuchProcess exception
-                }
-            }
-            Start-Sleep -Seconds 1
-        }
-        else {
-            break
-        }
+    foreach ($Property in $Properties) {
+        $Json.psobject.properties.Remove($Property)
     }
+}
 
-    if ($attempt -gt $maxAttempts) {
-        Write-Host "The maximum number of attempts to terminate a process has been reached."
+function Move-Json {
+    param (
+        [Parameter(Mandatory = $true)]
+        [Alias("t")]
+        [PSObject]$to,
+
+        [Parameter(Mandatory = $true)]
+        [Alias("n")]
+        [string[]]$name,
+
+        [Parameter(Mandatory = $true)]
+        [Alias("f")]
+        [PSObject]$from
+    )
+
+    foreach ($propertyName in $name) {
+        $from | Add-Member -MemberType NoteProperty -Name $propertyName -Value $to.$propertyName
+        Remove-Json -j $to -p $propertyName
     }
 }
 
 function Helper($paramname) {
-    function Remove-Json {
-        param (
-            [Parameter(Mandatory = $true)]
-            [Alias("j")]
-            [PSObject]$Json,
-
-            [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-            [Alias("p")]
-            [string[]]$Properties
-        )
-
-        foreach ($Property in $Properties) {
-            $Json.psobject.properties.Remove($Property)
-        }
-    }
-    function Move-Json {
-        param (
-            [Parameter(Mandatory = $true)]
-            [Alias("t")]
-            [PSObject]$to,
-
-            [Parameter(Mandatory = $true)]
-            [Alias("n")]
-            [string[]]$name,
-
-            [Parameter(Mandatory = $true)]
-            [Alias("f")]
-            [PSObject]$from
-        )
-
-        foreach ($propertyName in $name) {
-            $from | Add-Member -MemberType NoteProperty -Name $propertyName -Value $to.$propertyName
-            Remove-Json -j $to -p $propertyName
-        }
-    }
-
     switch ($paramname) {
         "HtmlLicMin" {
             $name = "patches.json.others."
@@ -395,9 +395,8 @@ function Helper($paramname) {
                 Move-Json -n "GlobalNavBar" -t $Enable -f $Disable
                 $Custom.GlobalNavBar.value = "control"
                 if ([version]$offline -le [version]"1.2.45.454") {
-                    Move-Json -n "RecentSearchesDropdown" -t $Enable -f $Disable
+                    Move-Json -n "RecentSearchesDropdown" -t $Enable -f $Disable }
                 }
-            }
             if ([version]$offline -le [version]'1.2.50.335') {
                 if (-not $funnyprogressbar) { Move-Json -n 'HeBringsNpb' -t $Enable -f $Disable }
             }
@@ -508,7 +507,6 @@ function Helper($paramname) {
         "Binary" {
             $binary = $webjson.others.binary
 
-            # The variable is used here, PSScriptAnalyzer might not detect it correctly in this scope.
             if ($not_block_update) { Remove-Json -j $binary -p 'block_update' }
             if ($premium) { Remove-Json -j $binary -p 'block_slots_2', 'block_slots_3' }
 
@@ -787,21 +785,6 @@ function injection {
     }
 }
 
-function Remove-Spicetify {
-    Write-Host "Uninstalling Spicetify..." -ForegroundColor Yellow
-    try {
-        spicetify restore --bypass-admin v
-        Remove-Item -Path "$env:LOCALAPPDATA\spicetify" -Recurse -Force -ErrorAction SilentlyContinue
-        [Environment]::SetEnvironmentVariable('PATH', ($env:PATH -replace ";$([regex]::Escape("$env:LOCALAPPDATA\spicetify"))"), [EnvironmentVariableTarget]::User)
-        Write-Host "Spicetify uninstalled successfully." -ForegroundColor Green
-    }
-    catch {
-        Write-Error "Error occurred during Spicetify uninstallation: $_"
-    }
-    pause
-    Clear-Host
-}
-
 function Restore-SpotX {
     Write-Host "Restoring Spotify to original state (Uninstalling SpotX)..." -ForegroundColor Yellow
     try {
@@ -835,12 +818,197 @@ function Restore-SpotX {
     Clear-Host
 }
 
-function Show-Status ($message) {
-    Write-Host -Object " > $($message)" -ForegroundColor Green
+function Uninstall-SpotX-Fn {
+    Write-Host "Uninstalling SpotX..." -ForegroundColor Yellow
+    Write-Host "Restoring Spotify to original state..." -ForegroundColor Cyan
+    try {
+        Restore-SpotX
+        Write-Host "SpotX uninstallation completed." -ForegroundColor Green
+    }
+    catch {
+        Write-Error "Error occurred during SpotX uninstallation: $_"
+    }
+    pause
+    Clear-Host
 }
 
-function Show-Error ($message) {
-    Write-Host -Object " > $($message)" -ForegroundColor Red
+function Write-Success {
+    [CmdletBinding()]
+    param ()
+    process {
+        Write-Host -Object ' > OK' -ForegroundColor 'Green'
+    }
+}
+
+function Write-Unsuccess {
+    [CmdletBinding()]
+    param ()
+    process {
+        Write-Host -Object ' > ERROR' -ForegroundColor 'Red'
+    }
+}
+
+function Test-Admin {
+    [CmdletBinding()]
+    param ()
+    begin {
+        Write-Host -Object "Checking if the script is not being run as administrator..." -NoNewline
+    }
+    process {
+        $currentUser = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+        -not $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    }
+}
+
+function Test-PowerShellVersion {
+    [CmdletBinding()]
+    param ()
+    begin {
+        $PSMinVersion = [version]'5.1'
+    }
+    process {
+        Write-Host -Object 'Checking if your PowerShell version is compatible...' -NoNewline
+        $PSVersionTable.PSVersion -ge $PSMinVersion
+    }
+}
+
+function Move-OldSpicetifyFolder {
+    [CmdletBinding()]
+    param ()
+    process {
+        $spicetifyOldFolderPath = "$HOME\spicetify-cli"
+        $spicetifyFolderPath = "$env:LOCALAPPDATA\spicetify"
+        if (Test-Path -Path $spicetifyOldFolderPath) {
+            Write-Host -Object 'Moving the old spicetify folder...' -NoNewline
+            Copy-Item -Path "$spicetifyOldFolderPath\*" -Destination $spicetifyFolderPath -Recurse -Force
+            Remove-Item -Path $spicetifyOldFolderPath -Recurse -Force
+            Write-Success
+        }
+    }
+}
+
+function Get-Spicetify {
+    [CmdletBinding()]
+    param (
+        [string]$version
+    )
+    begin {
+        if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') {
+            $architecture = 'x64'
+        }
+        elseif ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') {
+            $architecture = 'arm64'
+        }
+        else {
+            $architecture = 'x32'
+        }
+        if ($version) {
+            if ($version -match '^\d+\.\d+\.\d+$') {
+                $targetVersion = $version
+            }
+            else {
+                Write-Warning -Message "You have specified an invalid spicetify version: $($version) `nThe version must be in the following format: 1.2.3"
+                Pause
+                exit
+            }
+        }
+        else {
+            Write-Host -Object 'Fetching the latest spicetify version...' -NoNewline
+            $latestRelease = Invoke-RestMethod -Uri 'https://api.github.com/repos/spicetify/cli/releases/latest'
+            $targetVersion = $latestRelease.tag_name -replace 'v', ''
+            Write-Success
+        }
+        $archivePath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "spicetify.zip")
+    }
+    process {
+        Write-Host -Object "Downloading spicetify v$targetVersion..." -NoNewline
+        $Parameters = @{
+            Uri            = "https://github.com/spicetify/cli/releases/download/v$targetVersion/spicetify-$targetVersion-windows-$architecture.zip"
+            UseBasicParsing = $true
+            OutFile        = $archivePath
+        }
+        Invoke-WebRequest @Parameters
+        Write-Success
+    }
+    end {
+        $archivePath
+    }
+}
+
+function Add-SpicetifyToPath {
+    [CmdletBinding()]
+    param ()
+    begin {
+        Write-Host -Object 'Making spicetify available in the PATH...' -NoNewline
+        $user = [EnvironmentVariableTarget]::User
+        $path = [Environment]::GetEnvironmentVariable('PATH', $user)
+    }
+    process {
+        $spicetifyOldFolderPath = "$HOME\spicetify-cli"
+        $spicetifyFolderPath = "$env:LOCALAPPDATA\spicetify"
+        $path = $path -replace "$([regex]::Escape($spicetifyOldFolderPath))\\*;*", ''
+        if ($path -notlike "*$spicetifyFolderPath*") {
+            $path = "$path;$spicetifyFolderPath"
+        }
+    }
+    end {
+        [Environment]::SetEnvironmentVariable('PATH', $path, $user)
+        $env:PATH = $path
+        Write-Success
+    }
+}
+
+function Install-Spicetify-CLI {
+    [CmdletBinding()]
+    param ()
+    begin {
+        Write-Host -Object 'Installing Spicetify CLI...'
+    }
+    process {
+        $spicetifyFolderPath = "$env:LOCALAPPDATA\spicetify"
+        $archivePath = Get-Spicetify
+        Write-Host -Object 'Extracting spicetify...' -NoNewline
+        Expand-Archive -Path $archivePath -DestinationPath $spicetifyFolderPath -Force
+        Write-Success
+        Add-SpicetifyToPath
+    }
+    end {
+        Remove-Item -Path $archivePath -Force -ErrorAction 'SilentlyContinue'
+        Write-Host -Object 'Spicetify CLI was successfully installed!' -ForegroundColor 'Green'
+    }
+}
+
+function Install-Spicetify-Marketplace {
+    [CmdletBinding()]
+    param ()
+    begin {
+        Write-Host -Object 'Starting the Spicetify Marketplace installation script..'
+    }
+    process {
+        $Parameters = @{
+            Uri             = 'https://raw.githubusercontent.com/spicetify/spicetify-marketplace/main/resources/install.ps1'
+            UseBasicParsing = $true
+        }
+        Invoke-WebRequest @Parameters | Invoke-Expression
+    }
+    end {
+        Write-Host -Object 'Spicetify Marketplace installation script completed.' -ForegroundColor 'Green'
+    }
+}
+
+function Remove-Spicetify {
+    Write-Host "Uninstalling Spicetify..." -ForegroundColor Yellow
+    try {
+        spicetify restore --bypass-admin v
+        Remove-Item -Path "$env:LOCALAPPDATA\spicetify" -Recurse -Force -ErrorAction SilentlyContinue
+        [Environment]::SetEnvironmentVariable('PATH', ($env:PATH -replace ";$([regex]::Escape("$env:LOCALAPPDATA\spicetify"))"), [EnvironmentVariableTarget]::User)
+        Write-Host "Spicetify uninstalled successfully." -ForegroundColor Green
+    }
+    catch {
+        Write-Error "Error occurred during Spicetify uninstallation: $_"
+    }
+    pause
+    Clear-Host
 }
 
 function Invoke-SpicetifyApply {
@@ -977,139 +1145,6 @@ function Install-AllExtensions {
     Clear-Host
 }
 
-function Uninstall-SpotX-Fn {
-    Write-Host "Uninstalling SpotX..." -ForegroundColor Yellow
-    Write-Host "Restoring Spotify to original state..." -ForegroundColor Cyan
-    try {
-        Restore-SpotX
-        Write-Host "SpotX uninstallation completed." -ForegroundColor Green
-    }
-    catch {
-        Write-Error "Error occurred during SpotX uninstallation: $_"
-    }
-    pause
-    Clear-Host
-}
-
-
-#region Variables from SpotX.txt
-$PSDefaultParameterValues['Stop-Process:ErrorAction'] = [System.Management.Automation.ActionPreference]::SilentlyContinue
-
-$spotifyDirectory = Join-Path $env:APPDATA 'Spotify'
-$spotifyDirectory2 = Join-Path $env:LOCALAPPDATA 'Spotify'
-$spotifyExecutable = Join-Path $spotifyDirectory 'Spotify.exe'
-$exe_bak = Join-Path $spotifyDirectory 'Spotify.bak'
-$spotifyUninstall = Join-Path ([System.IO.Path]::GetTempPath()) 'SpotifyUninstall.exe'
-$start_menu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Spotify.lnk'
-
-$upgrade_client = $false
-$mirror = $false
-$onlineFull = "1.2.57.463.g4f748c64-3096"
-$online = ($onlineFull -split ".g")[0]
-$langCode = 'en'
-#$lang = CallLang -clg $langCode # Language selection removed
-# Default language set to English (en)
-$lang = CallLang -clg 'en' # Setting default language to en
-
-$os = Get-CimInstance -ClassName "Win32_OperatingSystem" -ErrorAction SilentlyContinue
-if ($os) {
-    $osCaption = $os.Caption
-}
-else {
-    $osCaption = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name ProductName).ProductName
-}
-$pattern = "\bWindows (7|8(\.1)?|10|11|12)\b"
-$reg = [regex]::Matches($osCaption, $pattern)
-$win_os = $reg.Value
-
-$win12 = $win_os -match "\windows 12\b"
-$win11 = $win_os -match "\windows 11\b"
-$win10 = $win_os -match "\windows 10\b"
-$win8_1 = $win_os -match "\windows 8.1\b"
-$win8 = $win_os -match "\windows 8\b"
-#$win7 = $win_os -match "\windows 7\b" # Unused variable removed
-
-#$old_os = $win7 -or $win8 -or $win8_1 # Unused variable removed
-
-$devtools = $false
-$podcasts_off = $true
-$adsections_off = $true
-$podcasts_on = $false
-$block_update_on = $true
-$block_update_off = $false
-$cache_limit = $null
-$confirm_uninstall_ms_spoti = $false
-$confirm_spoti_recomended_over = $false
-$confirm_spoti_recomended_uninstall = $false
-$premium = $false
-$DisableStartup = $false
-#$start_spoti = $false # Unused variable removed
-$exp_spotify = $false
-$topsearchbar = $false
-$homesub_off = $false
-$hide_col_icon_off = $false
-$rightsidebar_off = $false
-$plus = $false
-$canvasHome = $false
-$funnyprogressBar = $false
-$new_theme = $false
-$rightsidebarcolor = $false
-$old_lyrics = $false
-$lyrics_block = $true
-$no_shortcut = $false
-$lyrics_stat = $null
-$urlform_goofy = $null
-$idbox_goofy = $null
-$err_ru = $false
-#$language = $null # Unused variable removed
-$not_block_update = -not ($block_update_on) # Corrected and used later
-$podcast_off = $podcasts_off
-
-$webjson = $null
-$webjsonru = $null
-$offline = ""
-$offline_bak = ""
-$downgrading = $false
-$ru = $false
-$css = $null
-$global:type = ""
-
-#endregion Variables from SpotX.txt
-
-
-#region New Menu Functions
-function Show-InstallSpotifyMenu {
-    Clear-Host
-    while ($true) {
-        Write-Host "========= Install Spotify Menu =========" -ForegroundColor Cyan
-        Write-Host "1. Spotify" -ForegroundColor White
-        Write-Host "2. Uninstall Spotify" -ForegroundColor White
-        Write-Host "3. Back to Main Menu" -ForegroundColor White
-        Write-Host "=====================================" -ForegroundColor Cyan
-
-        $spotifyOption = Read-Host "Select an option"
-
-        switch ($spotifyOption) {
-            "1" {
-                Show-InstallSpotifyMenu_Install
-            }
-            "2" {
-                Show-InstallSpotifyMenu_Uninstall
-            }
-            "3" {
-                Write-Host "Back to Main Menu..." -ForegroundColor Green
-                Clear-Host
-                return
-            }
-            default {
-                Write-Host "Invalid option. Please select a number from the menu." -ForegroundColor Red
-                pause
-                Clear-Host
-            }
-        }
-    }
-}
-
 function Show-InstallSpotifyMenu_Install {
     Write-Host "Option 1 selected: Install Spotify..." -ForegroundColor Yellow
     Write-Host "Please wait, installing Spotify..." -ForegroundColor Cyan
@@ -1152,6 +1187,107 @@ function Show-InstallSpotifyMenu_Uninstall {
     }
     catch {
         Write-Error "Error occurred during Spotify uninstallation: $_"
+    }
+    pause
+    Clear-Host
+}
+
+function Show-InstallSpotifyMenu {
+    Clear-Host
+    while ($true) {
+        Write-Host "========= Install Spotify Menu =========" -ForegroundColor Cyan
+        Write-Host "1. Spotify" -ForegroundColor White
+        Write-Host "2. Uninstall Spotify" -ForegroundColor White
+        Write-Host "3. Back to Main Menu" -ForegroundColor White
+        Write-Host "=====================================" -ForegroundColor Cyan
+
+        $spotifyOption = Read-Host "Select an option"
+
+        switch ($spotifyOption) {
+            "1" {
+                Show-InstallSpotifyMenu_Install
+            }
+            "2" {
+                Show-InstallSpotifyMenu_Uninstall
+            }
+            "3" {
+                Write-Host "Back to Main Menu..." -ForegroundColor Green
+                Clear-Host
+                return
+            }
+            default {
+                Write-Host "Invalid option. Please select a number from the menu." -ForegroundColor Red
+                pause
+                Clear-Host
+            }
+        }
+    }
+}
+
+function Show-InstallSpicetifyMenu_Install {
+    Clear-Host
+    Write-Host "Option 1 selected: Install Spicetify CLI and Marketplace..." -ForegroundColor Yellow
+    Write-Host "Please wait, installing Spicetify CLI and Marketplace..." -ForegroundColor Cyan
+    Write-Host "If you see a warning about running as administrator, please try running this script from a regular PowerShell window (not 'Run as administrator')." -ForegroundColor Yellow
+    try {
+        $ErrorActionPreference = 'Stop'
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+        if (-not (Test-PowerShellVersion)) {
+            Write-Unsuccess
+            Write-Warning -Message 'PowerShell 5.1 or higher is required to run this script'
+            Write-Warning -Message "You are running PowerShell $($PSVersionTable.PSVersion)"
+            Write-Host -Object 'PowerShell 5.1 install guide:'
+            Write-Host -Object 'https://learn.microsoft.com/skypeforbusiness/set-up-your-computer-for-windows-powershell/download-and-install-windows-powershell-5-1'
+            Write-Host -Object 'PowerShell 7 install guide:'
+            Write-Host -Object 'https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-windows'
+            Pause
+            exit
+        }
+        else {
+            Write-Success
+        }
+        if (-not (Test-Admin)) {
+            Write-Unsuccess
+            Write-Warning -Message "The script was run as administrator. This can result in problems with the installation process or unexpected behavior. Do not continue if you do not know what you are doing."
+            $Host.UI.RawUI.Flushinputbuffer()
+            $choices = @(
+                (New-Object System.Management.Automation.Host.ChoiceDescription '&Yes', 'Abort installation.'),
+                (New-Object System.Management.Automation.Host.ChoiceDescription '&No', 'Resume installation.')
+            )
+            $choice = $Host.UI.PromptForChoice('', 'Do you want to abort the installation process?', $choices, 0)
+            if ($choice -eq 0) {
+                Write-Host -Object 'spicetify installation aborted' -ForegroundColor 'Yellow'
+                Pause
+                exit
+            }
+        } else {
+            Write-Success
+        }
+
+        Move-OldSpicetifyFolder
+        Install-Spicetify-CLI
+        Write-Host -Object "`nRun" -NoNewline
+        Write-Host -Object ' spicetify -h ' -NoNewline -ForegroundColor 'Cyan'
+        Write-Host -Object 'to get started'
+
+        $Host.UI.RawUI.Flushinputbuffer()
+        $choices = @(
+            (New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", "Install Spicetify Marketplace."),
+            (New-Object System.Management.Automation.Host.ChoiceDescription "&No", "Do not install Spicetify Marketplace.")
+        )
+        $choice = $Host.UI.PromptForChoice('', "`nDo you also want to install Spicetify Marketplace? It will become available within the Spotify Marketplace, where you can easily install themes and extensions.", $choices, 0)
+        if ($choice -eq 1) {
+            Write-Host -Object 'spicetify Marketplace installation aborted' -ForegroundColor 'Yellow'
+        }
+        else {
+            Install-Spicetify-Marketplace
+        }
+
+        Write-Host "Spicetify CLI and Marketplace installation completed." -ForegroundColor Green
+    }
+    catch {
+        Write-Error "Error occurred during Spicetify CLI and Marketplace installation: $_"
     }
     pause
     Clear-Host
@@ -1208,97 +1344,6 @@ function Show-InstallSpicetifyMenu {
     }
 }
 
-function Show-InstallSpicetifyMenu_Install {
-    Write-Host "Option 1 selected: Install Spicetify CLI..." -ForegroundColor Yellow
-    Write-Host "Please wait, installing Spicetify CLI and Marketplace..." -ForegroundColor Cyan
-    Write-Host "If you see a warning about running as administrator, please try running this script from a regular PowerShell window (not 'Run as administrator')." -ForegroundColor Yellow
-    try {
-        $ErrorActionPreference = 'Stop'
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-        $spicetifyFolderPath = "$env:LOCALAPPDATA\spicetify"
-        $spicetifyOldFolderPath = "$HOME\spicetify-cli"
-
-        function Write-Success { process { Write-Host -Object ' > OK' -ForegroundColor 'Green' } }
-        function Write-Unsuccess { process { Write-Host -Object ' > ERROR' -ForegroundColor 'Red' } }
-        function Test-Admin { process { $currentUser = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent()); -not $currentUser.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) } begin { Write-Host -Object "Checking if the script is not being run as administrator..." -NoNewline } }
-        function Test-PowerShellVersion { process { Write-Host -Object 'Checking if your PowerShell version is compatible...' -NoNewline; $PSVersionTable.PSVersion -ge $PSMinVersion } begin { $PSMinVersion = [version]'5.1' } }
-        function Move-OldSpicetifyFolder { process { if (Test-Path -Path $spicetifyOldFolderPath) { Write-Host -Object 'Moving the old spicetify folder...' -NoNewline; Copy-Item -Path "$spicetifyOldFolderPath\*" -Destination $spicetifyFolderPath -Recurse -Force; Remove-Item -Path $spicetifyOldFolderPath -Recurse -Force; Write-Success } } }
-        function Get-Spicetify {
-          begin {
-            if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { $architecture = 'x64' }
-            elseif ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { $architecture = 'arm64' }
-            else { $architecture = 'x32' }
-            if ($v) {
-              if ($v -match '^\d+\.\d+\.\d+$') { $targetVersion = $v }
-              else { Write-Warning -Message "You have spicefied an invalid spicetify version: $v `nThe version must be in the following format: 1.2.3"; Pause; exit }
-            }
-            else {
-              Write-Host -Object 'Fetching the latest spicetify version...' -NoNewline
-              $latestRelease = Invoke-RestMethod -Uri 'https://api.github.com/repos/spicetify/cli/releases/latest'
-              $targetVersion = $latestRelease.tag_name -replace 'v', ''; Write-Success
-            }
-            $archivePath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "spicetify.zip")
-          }
-          process {
-            Write-Host -Object "Downloading spicetify v$targetVersion..." -NoNewline
-            $Parameters = @{
-              Uri            = "https://github.com/spicetify/cli/releases/download/v$targetVersion/spicetify-$targetVersion-windows-$architecture.zip"
-              UseBasicParsin = $true
-              OutFile        = $archivePath
-            }
-            Invoke-WebRequest @Parameters; Write-Success
-          }
-          end { $archivePath }
-        }
-        function Add-SpicetifyToPath {
-          begin { Write-Host -Object 'Making spicetify available in the PATH...' -NoNewline; $user = [EnvironmentVariableTarget]::User; $path = [Environment]::GetEnvironmentVariable('PATH', $user) }
-          process { $path = $path -replace "$([regex]::Escape($spicetifyOldFolderPath))\\*;*", ''; if ($path -notlike "*$spicetifyFolderPath*") { $path = "$path;$spicetifyFolderPath" } }
-          end { [Environment]::SetEnvironmentVariable('PATH', $path, $user); $env:PATH = $path; Write-Success }
-        }
-        function Install-Spicetify {
-          begin { Write-Host -Object 'Installing spicetify...' }
-          process { $archivePath = Get-Spicetify; Write-Host -Object 'Extracting spicetify...' -NoNewline; Expand-Archive -Path $archivePath -DestinationPath $spicetifyFolderPath -Force; Write-Success; Add-SpicetifyToPath }
-          end { Remove-Item -Path $archivePath -Force -ErrorAction 'SilentlyContinue'; Write-Host -Object 'spicetify was successfully installed!' -ForegroundColor 'Green' }
-        }
-
-        if (-not (Test-PowerShellVersion)) {
-          Write-Unsuccess; Write-Warning -Message 'PowerShell 5.1 or higher is required to run this script'; Write-Warning -Message "You are running PowerShell $($PSVersionTable.PSVersion)"; Write-Host -Object 'PowerShell 5.1 install guide:'; Write-Host -Object 'https://learn.microsoft.com/skypeforbusiness/set-up-your-computer-for-windows-powershell/download-and-install-windows-powershell-5-1'; Write-Host -Object 'PowerShell 7 install guide:'; Write-Host -Object 'https://learn.microsoft.com/powershell/scripting/install/installing-powershell-on-windows'; Pause; exit
-        } else { Write-Success }
-        if (-not (Test-Admin)) {
-          Write-Unsuccess; Write-Warning -Message "The script was run as administrator. This can result in problems with the installation process or unexpected behavior. Do not continue if you do not know what you are doing."; $Host.UI.RawUI.Flushinputbuffer(); $choices = @( (New-Object System.Management.Automation.Host.ChoiceDescription '&Yes', 'Abort installation.'), (New-Object System.Management.Automation.Host.ChoiceDescription '&No', 'Resume installation.') ); $choice = $Host.UI.PromptForChoice('', 'Do you want to abort the installation process?', $choices, 0); if ($choice -eq 0) { Write-Host -Object 'spicetify installation aborted' -ForegroundColor 'Yellow'; Pause; exit }
-        } else { Write-Success }
-
-        Move-OldSpicetifyFolder
-        Install-Spicetify
-        Write-Host -Object "`nRun" -NoNewline
-        Write-Host -Object ' spicetify -h ' -NoNewline -ForegroundColor 'Cyan'
-        Write-Host -Object 'to get started'
-
-        $Host.UI.RawUI.Flushinputbuffer()
-        $choices = @( (New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", "Install Spicetify Marketplace."), (New-Object System.Management.Automation.Host.ChoiceDescription "&No", "Do not install Spicetify Marketplace.") )
-        $choice = $Host.UI.PromptForChoice('', "`nDo you also want to install Spicetify Marketplace? It will become available within the Spotify Marketplace, where you can easily install themes and extensions.", $choices, 0)
-        if ($choice -eq 1) {
-          Write-Host -Object 'spicetify Marketplace installation aborted' -ForegroundColor 'Yellow'
-        }
-        else {
-          Write-Host -Object 'Starting the spicetify Marketplace installation script..'
-          $Parameters = @{
-            Uri             = 'https://raw.githubusercontent.com/spicetify/spicetify-marketplace/main/resources/install.ps1'
-            UseBasicParsing = $true
-          }
-          Invoke-WebRequest @Parameters | Invoke-Expression
-        }
-
-        Write-Host "Spicetify CLI and Marketplace installation completed." -ForegroundColor Green
-    }
-    catch {
-        Write-Error "Error occurred during Spicetify CLI and Marketplace installation: $_"
-    }
-    pause
-    Clear-Host
-}
-
 function Show-SpicetifyExtensionsMenu {
     Clear-Host
     while ($true) {
@@ -1351,46 +1396,11 @@ function Show-SpicetifyExtensionsMenu {
     }
 }
 
-function Show-InstallSpotXMenu {
-    Clear-Host
-    while ($true) {
-        Write-Host "========= Install SpotX Menu =========" -ForegroundColor Cyan
-        Write-Host "1. Install SpotX" -ForegroundColor White
-        Write-Host "2. Uninstall SpotX" -ForegroundColor White
-        Write-Host "3. Back to Main Menu" -ForegroundColor White
-        Write-Host "=====================================" -ForegroundColor Cyan
-
-        $spotXOption = Read-Host "Select an option"
-
-        switch ($spotXOption) {
-            "1" {
-                Show-InstallSpotXMenu_Install
-            }
-            "2" {
-                Uninstall-SpotX-Fn
-            }
-            "3" {
-                Write-Host "Back to Main Menu..." -ForegroundColor Green
-                Clear-Host
-                return
-            }
-            default {
-                Write-Host "Invalid option. Please select a number from the menu." -ForegroundColor Red
-                pause
-                Clear-Host
-            }
-        }
-    }
-}
-
 function Show-InstallSpotXMenu_Install {
     Write-Host "Option 1 selected: Install SpotX..." -ForegroundColor Yellow
     Write-Host "Please wait, installing SpotX..." -ForegroundColor Cyan
 
     try {
-        #region SpotX Installation Logic (from Option 3 in previous Main Menu)
-        #region SpotX Installation Logic (from SpotX.txt, adapted)
-
         Stop-Spotify
 
         if ($win10 -or $win11 -or $win8_1 -or $win8 -or $win12) {
@@ -1478,7 +1488,6 @@ function Show-InstallSpotXMenu_Install {
                 }
                 if ($confirm_spoti_recomended_over -or $confirm_spoti_recomended_uninstall) { $ch = 'y'; Write-Host ($lang).AutoUpd`n }
                 if ($ch -eq 'y') {
-                    $upgrade_client = $true
                     if (-not ($confirm_spoti_recomended_over) -and -not ($confirm_spoti_recomended_uninstall)) {
                         do {
                             $ch = Read-Host -Prompt (($lang).DelOrOver -f $offline)
@@ -1501,16 +1510,15 @@ function Show-InstallSpotXMenu_Install {
                     }
                     if ($ch -eq 'n') { $ch = $null }
                 }
-                if ($ch -eq 'n') { $downgrading = $true }
             }
 
             if ($testversion) {
                 try {
                     $country = [System.Globalization.RegionInfo]::CurrentRegion.EnglishName
                     $txt = [IO.File]::ReadAllText($spotifyExecutable)
-                    $versionRegex = "(?<![\w\-])(\d+)\.(\d+)\.(\d+)\.(\d+)(\.g[0-9a-f]{8})(?![\w\-])" # Renamed variable
-                    $versionMatches = [regex]::Matches($txt, $versionRegex) # Renamed variable
-                    $ver = $versionMatches[0].Value # Renamed variable
+                    $versionRegex = "(?<![\w\-])(\d+)\.(\d+)\.(\d+)\.(\d+)(\.g[0-9a-f]{8})(?![\w\-])"
+                    $versionMatches = [regex]::Matches($txt, $versionRegex)
+                    $ver = $versionMatches[0].Value
 
                     $Parameters = @{
                         Uri    = 'https://docs.google.com/forms/d/e/1FAIpQLSegGsAgilgQ8Y36uw-N7zFF6Lh40cXNfyl1ecHPpZcpD8kdHg/formResponse'
@@ -1538,7 +1546,7 @@ function Show-InstallSpotXMenu_Install {
                     while ($ch -notmatch '^y$|^n$')
                 }
                 if ($confirm_spoti_recomended_over -or $confirm_spoti_recomended_uninstall) { $ch = 'n' }
-                if ($ch -eq 'y') { $upgrade_client = $false }
+                if ($ch -eq 'y') { }
                 if ($ch -eq 'n') {
                     if (-not ($confirm_spoti_recomended_over) -and -not ($confirm_spoti_recomended_uninstall)) {
                         do {
@@ -1550,8 +1558,6 @@ function Show-InstallSpotXMenu_Install {
                     }
                     if ($confirm_spoti_recomended_over -or $confirm_spoti_recomended_uninstall) { $ch = 'y'; Write-Host ($lang).AutoUpd`n }
                     if ($ch -eq 'y') {
-                        $upgrade_client = $true
-                        $downgrading = $true
                         if (-not ($confirm_spoti_recomended_over) -and -not ($confirm_spoti_recomended_uninstall)) {
                             do {
                                 $ch = Read-Host -Prompt (($lang).DelOrOver -f $offline)
@@ -1607,7 +1613,9 @@ function Show-InstallSpotXMenu_Install {
             Start-Sleep -Milliseconds 200
 
             Start-Process -FilePath explorer.exe -ArgumentList "$PWD\SpotifySetup.exe" -Wait
-            while (-not (Get-Process | Where-Object { $_.ProcessName -eq 'SpotifySetup' })) { }
+            while (-not (Get-Process | Where-Object { $_.ProcessName -eq 'SpotifySetup' })) {
+                Start-Sleep -Milliseconds 500
+            }
             Wait-Process -name SpotifySetup
             Stop-Spotify
 
@@ -1920,8 +1928,6 @@ app.autostart-mode="off"
             }
         }
         Write-Host ($lang).InstallComplete`n -ForegroundColor Green
-
-        #endregion SpotX Installation Logic
     }
     catch {
         Write-Error "Error occurred during SpotX installation: $_"
@@ -1943,40 +1949,148 @@ function Show-InstallSpotXMenu_Uninstall {
     pause
     Clear-Host
 }
-#endregion New Menu Functions
 
+function Show-InstallSpotXMenu {
+    Clear-Host
+    while ($true) {
+        Write-Host "========= Install SpotX Menu =========" -ForegroundColor Cyan
+        Write-Host "1. Install SpotX" -ForegroundColor White
+        Write-Host "2. Uninstall SpotX" -ForegroundColor White
+        Write-Host "3. Back to Main Menu" -ForegroundColor White
+        Write-Host "=====================================" -ForegroundColor Cyan
 
-Clear-Host
+        $spotXOption = Read-Host "Select an option"
 
-while ($true) {
-    Write-Host "================= Main Menu =================" -ForegroundColor Cyan
-    Write-Host "1. Spotify" -ForegroundColor White
-    Write-Host "2. Spicetify" -ForegroundColor White
-    Write-Host "3. SpotX" -ForegroundColor White
-    Write-Host "4. Exit the Code" -ForegroundColor White
-    Write-Host "==========================================" -ForegroundColor Cyan
-
-    $option = Read-Host "Select an option"
-
-    switch ($option) {
-        "1" {
-            Show-InstallSpotifyMenu
-        }
-
-        "2" {
-            Show-InstallSpicetifyMenu
-        }
-        "3" {
-            Show-InstallSpotXMenu
-        }
-        "4" {
-            Write-Host "Exiting script..." -ForegroundColor Green
-            exit
-        }
-        default {
-            Write-Host "Invalid option. Please select a number from the menu." -ForegroundColor Red
-            pause
-            Clear-Host
+        switch ($spotXOption) {
+            "1" {
+                Show-InstallSpotXMenu_Install
+            }
+            "2" {
+                Uninstall-SpotX-Fn
+            }
+            "3" {
+                Write-Host "Back to Main Menu..." -ForegroundColor Green
+                Clear-Host
+                return
+            }
+            default {
+                Write-Host "Invalid option. Please select a number from the menu." -ForegroundColor Red
+                pause
+                Clear-Host
+            }
         }
     }
 }
+
+function Show-MainMenu {
+    Clear-Host
+
+    while ($true) {
+        Write-Host "================= Main Menu =================" -ForegroundColor Cyan
+        Write-Host "1. Spotify" -ForegroundColor White
+        Write-Host "2. Spicetify" -ForegroundColor White
+        Write-Host "3. SpotX" -ForegroundColor White
+        Write-Host "4. Exit the Code" -ForegroundColor White
+        Write-Host "==========================================" -ForegroundColor Cyan
+
+        $option = Read-Host "Select an option"
+
+        switch ($option) {
+            "1" {
+                Show-InstallSpotifyMenu
+            }
+
+            "2" {
+                Show-InstallSpicetifyMenu
+            }
+            "3" {
+                Show-InstallSpotXMenu
+            }
+            "4" {
+                Write-Host "Exiting script..." -ForegroundColor Green
+                exit
+            }
+            default {
+                Write-Host "Invalid option. Please select a number from the menu." -ForegroundColor Red
+                pause
+                Clear-Host
+            }
+        }
+    }
+}
+
+$PSDefaultParameterValues['Stop-Process:ErrorAction'] = [System.Management.Automation.ActionPreference]::SilentlyContinue
+
+$spotifyDirectory = Join-Path $env:APPDATA 'Spotify'
+$spotifyDirectory2 = Join-Path $env:LOCALAPPDATA 'Spotify'
+$spotifyExecutable = Join-Path $spotifyDirectory 'Spotify.exe'
+$exe_bak = Join-Path $spotifyDirectory 'Spotify.bak'
+$spotifyUninstall = Join-Path ([System.IO.Path]::GetTempPath()) 'SpotifyUninstall.exe'
+$start_menu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Spotify.lnk'
+
+$upgrade_client = $false
+$mirror = $false
+$onlineFull = "1.2.57.463.g4f748c64-3096"
+$online = ($onlineFull -split ".g")[0]
+$langCode = 'en'
+$lang = CallLang -clg 'en'
+
+$os = Get-CimInstance -ClassName "Win32_OperatingSystem" -ErrorAction SilentlyContinue
+if ($os) {
+    $osCaption = $os.Caption
+}
+else {
+    $osCaption = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name ProductName).ProductName
+}
+$pattern = "\bWindows (7|8(\.1)?|10|11|12)\b"
+$reg = [regex]::Matches($osCaption, $pattern)
+$win_os = $reg.Value
+
+$win12 = $win_os -match "\windows 12\b"
+$win11 = $win_os -match "\windows 11\b"
+$win10 = $win_os -match "\windows 10\b"
+$win8_1 = $win_os -match "\windows 8.1\b"
+$win8 = $win_os -match "\windows 8\b"
+
+$devtools = $false
+$podcasts_off = $true
+$adsections_off = $true
+$podcasts_on = $false
+$block_update_on = $true
+$block_update_off = $false
+$cache_limit = $null
+$confirm_uninstall_ms_spoti = $false
+$confirm_spoti_recomended_over = $false
+$confirm_spoti_recomended_uninstall = $false
+$premium = $false
+$DisableStartup = $false
+$exp_spotify = $false
+$topsearchbar = $false
+$homesub_off = $false
+$hide_col_icon_off = $false
+$rightsidebar_off = $false
+$plus = $false
+$canvasHome = $false
+$funnyprogressbar = $false
+$new_theme = $false
+$rightsidebarcolor = $false
+$old_lyrics = $false
+$lyrics_block = $true
+$no_shortcut = $false
+$lyrics_stat = $null
+$urlform_goofy = $null
+$idbox_goofy = $null
+$err_ru = $false
+$not_block_update = -not ($block_update_on)
+$podcast_off = $podcasts_off
+
+$webjson = $null
+$webjsonru = $null
+$offline = ""
+$offline_bak = ""
+$downgrading = $false
+$ru = $false
+$css = $null
+$global:type = ""
+
+Show-MainMenu
