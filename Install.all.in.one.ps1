@@ -1,4 +1,4 @@
-﻿﻿﻿function Format-LanguageCode {
+﻿function Format-LanguageCode {
     [CmdletBinding()]
     [OutputType([string])]
     param
@@ -71,7 +71,7 @@ function Get-Link {
 function CallLang($clg) {
     $ProgressPreference = 'SilentlyContinue'
     try {
-        $response = (iwr -Uri (Get-Link -e "/scripts/installer-lang/$clg.ps1") -UseBasicParsing).Content
+        $response = (Invoke-WebRequest -Uri (Get-Link -e "/scripts/installer-lang/$clg.ps1") -UseBasicParsing).Content
         if ($mirror) { $response = [System.Text.Encoding]::UTF8.GetString($response) }
         Invoke-Expression $response
     }
@@ -82,7 +82,7 @@ function CallLang($clg) {
     }
 }
 
-function Get {
+function Get-WebData {
     param (
         [Parameter(Mandatory = $true)]
         [string]$Url,
@@ -149,7 +149,7 @@ function Unlock-Folder {
         }
     }
 }
-function Mod-F {
+function Format-String {
     param(
         [string] $template,
         [object[]] $arguments
@@ -184,12 +184,12 @@ function downloadSp() {
             curl.exe -q -k $web_Url -o $local_Url --progress-bar --retry 3 --ssl-no-revoke
             return
         }
-        if (!($curl_check) -and $null -ne (Get-Module -Name BitsTransfer -ListAvailable)) {
+        if (-not $curl_check -and $null -ne (Get-Module -Name BitsTransfer -ListAvailable)) {
             $ProgressPreference = 'Continue'
             Start-BitsTransfer -Source  $web_Url -Destination $local_Url  -DisplayName ($lang).Download5 -Description "$online "
             return
         }
-        if (!($curl_check) -and $null -eq (Get-Module -Name BitsTransfer -ListAvailable)) {
+        if (-not $curl_check -and $null -eq (Get-Module -Name BitsTransfer -ListAvailable)) {
             $webClient.DownloadFile($web_Url, $local_Url)
             return
         }
@@ -210,11 +210,11 @@ function downloadSp() {
                 curl.exe -q -k $web_Url -o $local_Url --progress-bar --retry 3 --ssl-no-revoke
                 return
             }
-            if (!($curl_check) -and $null -ne (Get-Module -Name BitsTransfer -ListAvailable) -and !($curl_check )) {
+            if (-not $curl_check -and $null -ne (Get-Module -Name BitsTransfer -ListAvailable) -and -not $curl_check ) {
                 Start-BitsTransfer -Source  $web_Url -Destination $local_Url  -DisplayName ($lang).Download5 -Description "$online "
                 return
             }
-            if (!($curl_check) -and $null -eq (Get-Module -Name BitsTransfer -ListAvailable) -and !($curl_check )) {
+            if (-not $curl_check -and $null -eq (Get-Module -Name BitsTransfer -ListAvailable) -and -not $curl_check ) {
                 $webClient.DownloadFile($web_Url, $local_Url)
                 return
             }
@@ -244,13 +244,13 @@ function DesktopFolder {
     $regedit_desktop_folder = Get-ItemProperty -Path "Registry::HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\"
     $regedit_desktop = $regedit_desktop_folder.'{754AC886-DF64-4CBA-86B5-F7FBF4FBCEF5}'
 
-    if (!(Test-Path "$env:USERPROFILE\Desktop")) {
+    if (-not (Test-Path "$env:USERPROFILE\Desktop")) {
         $desktop_folder = $regedit_desktop
     }
     return $desktop_folder
 }
 
-function Kill-Spotify {
+function Stop-Spotify {
     param (
         [int]$maxAttempts = 5
     )
@@ -388,10 +388,10 @@ function Helper($paramname) {
             if ([version]$offline -ge [version]'1.2.41.434' -and $lyrics_block) { Move-Json -n 'Lyrics' -t $Enable -f $Disable }
             if ([version]$offline -eq [version]'1.2.30.1135') { Move-Json -n 'QueueOnRightPanel' -t $Enable -f $Disable }
             if ([version]$offline -le [version]'1.2.50.335') {
-                if (!($plus)) { Move-Json -n "Plus", "AlignedCurationSavedIn" -t $Enable -f $Disable }
+                if (-not $plus) { Move-Json -n "Plus", "AlignedCurationSavedIn" -t $Enable -f $Disable }
             }
 
-            if (!$topsearchbar) {
+            if (-not $topsearchbar) {
                 Move-Json -n "GlobalNavBar" -t $Enable -f $Disable
                 $Custom.GlobalNavBar.value = "control"
                 if ([version]$offline -le [version]"1.2.45.454") {
@@ -399,15 +399,15 @@ function Helper($paramname) {
                 }
             }
             if ([version]$offline -le [version]'1.2.50.335') {
-                if (!($funnyprogressbar)) { Move-Json -n 'HeBringsNpb' -t $Enable -f $Disable }
+                if (-not $funnyprogressbar) { Move-Json -n 'HeBringsNpb' -t $Enable -f $Disable }
             }
-            if (!($canvasHome)) { Move-Json -n "canvasHome", "canvasHomeAudioPreviews" -t $Enable -f $Disable }
+            if (-not $canvasHome) { Move-Json -n "canvasHome", "canvasHomeAudioPreviews" -t $Enable -f $Disable }
 
             if ($homesub_off) {
                 Move-Json -n "HomeSubfeeds" -t $Enable -f $Disable
             }
 
-            if (!($new_theme) -and [version]$offline -le [version]"1.2.13.661") {
+            if (-not $new_theme -and [version]$offline -le [version]"1.2.13.661") {
                 Move-Json -n 'RightSidebar', 'LeftSidebar' -t $Enable -f $Disable
                 Remove-Json -j $Custom -p "NavAlt", 'NavAlt2'
                 Remove-Json -j $Enable -p 'RightSidebarLyrics', 'RightSidebarCredits', 'RightSidebar', 'LeftSidebar', 'RightSidebarColors'
@@ -417,11 +417,11 @@ function Helper($paramname) {
                     Move-Json -n 'RightSidebar' -t $Enable -from $Disable
                 }
                 else {
-                    if (!($rightsidebarcolor)) { Remove-Json -j $Enable -p 'RightSidebarColors' }
+                    if (-not $rightsidebarcolor) { Remove-Json -j $Enable -p 'RightSidebarColors' }
                     if ($old_lyrics) { Remove-Json -j $Enable -p 'RightSidebarLyrics' }
                 }
             }
-            if (!$premium) { Remove-Json -j $Enable -p 'RemoteDownloads' }
+            if (-not $premium) { Remove-Json -j $Enable -p 'RemoteDownloads' }
 
             if ($exp_spotify) {
                 $objects = @(
@@ -437,7 +437,7 @@ function Helper($paramname) {
 
                 foreach ($obj in $objects) {
                     $propertiesToRemove = $obj.Object.Name | Where-Object { $_ -notin $obj.PropertiesToKeep }
-                    $propertiesToRemove | foreach {
+                    $propertiesToRemove | ForEach-Object {
                         $obj.Object.Remove($_)
                     }
                 }
@@ -451,7 +451,7 @@ function Helper($paramname) {
                 foreach ($key in $itemProperties) {
                     $vers = $item.$key.version
 
-                    if (!($vers.to -eq "" -or [version]$vers.to -ge [version]$offline_patch -and [version]$vers.fr -le [version]$offline_patch)) {
+                    if (-not ($vers.to -eq "" -or [version]$vers.to -ge [version]$offline_patch -and [version]$vers.fr -le [version]$offline_patch)) {
                         if ($item.PSObject.Properties.Name -contains $key) {
                             $item.PSObject.Properties.Remove($key)
                         }
@@ -508,6 +508,7 @@ function Helper($paramname) {
         "Binary" {
             $binary = $webjson.others.binary
 
+            # The variable is used here, PSScriptAnalyzer might not detect it correctly in this scope.
             if ($not_block_update) { Remove-Json -j $binary -p 'block_update' }
             if ($premium) { Remove-Json -j $binary -p 'block_slots_2', 'block_slots_3' }
 
@@ -537,12 +538,12 @@ function Helper($paramname) {
                 Remove-Json -j $VarJs -p "fixTitlebarHeight"
             }
 
-            if (!($lyrics_block)) { Remove-Json -j $VarJs -p "lyrics-block" }
+            if (-not $lyrics_block) { Remove-Json -j $VarJs -p "lyrics-block" }
             else {
                 Remove-Json -j $VarJs -p "lyrics-old-on"
             }
 
-            if (!($devtools)) { Remove-Json -j $VarJs -p "dev-tools" }
+            if (-not $devtools) { Remove-Json -j $VarJs -p "dev-tools" }
             else {
                 if ([version]$offline -ge [version]"1.2.35.663") {
                     $newDevTools = $webjson.VariousJs.'dev-tools'.PSObject.Copy()
@@ -560,10 +561,10 @@ function Helper($paramname) {
             }
             else { Remove-Json -j $VarJs -p "goofyhistory" }
 
-            if (!($ru)) { Remove-Json -j $VarJs -p "offrujs" }
+            if (-not $ru) { Remove-Json -j $VarJs -p "offrujs" }
 
-            if (!($premium) -or ($cache_limit)) {
-                if (!($premium)) {
+            if (-not $premium -or ($cache_limit)) {
+                if (-not $premium) {
                     $adds += $webjson.VariousJs.product_state.add
                 }
 
@@ -571,7 +572,7 @@ function Helper($paramname) {
                     if ($cache_limit -lt 500) { $cache_limit = 500 }
                     if ($cache_limit -gt 20000) { $cache_limit = 20000 }
                     $adds2 = $webjson.VariousJs.product_state.add2
-                    if (!([string]::IsNullOrEmpty($adds))) { $adds2 = ',' + $adds2 }
+                    if (-not ([string]::IsNullOrEmpty($adds))) { $adds2 = ',' + $adds2 }
                     $adds += $adds2 -f $cache_limit
                 }
                 $repl = $webjson.VariousJs.product_state.replace
@@ -602,7 +603,7 @@ function Helper($paramname) {
     $novariable = "Didn't find variable "
     $offline_patch = $offline -replace '(\d+\.\d+\.\d+)(.\d+)', '$1'
 
-    $contents | foreach {
+    $contents | ForEach-Object {
         if ($json.$PSItem.version.to) { $to = [version]$json.$PSItem.version.to -ge [version]$offline_patch } else { $to = $true }
         if ($json.$PSItem.version.fr) { $fr = [version]$json.$PSItem.version.fr -le [version]$offline_patch } else { $fr = $false }
 
@@ -613,7 +614,7 @@ function Helper($paramname) {
                 $count = $json.$PSItem.match.Count - 1
                 $numbers = 0
 
-                While ($numbers -le $count) {
+                while ($numbers -le $count) {
 
                     if ($paramdata -match $json.$PSItem.match[$numbers]) {
                         $paramdata = $paramdata -replace $json.$PSItem.match[$numbers], $json.$PSItem.replace[$numbers]
@@ -634,7 +635,7 @@ function Helper($paramname) {
                     $paramdata = $paramdata -replace $json.$PSItem.match, $json.$PSItem.replace
                 }
                 else {
-                    if (!($translate) -or $err_ru) {
+                    if (-not $translate -or $err_ru) {
                         Write-Host $novariable -ForegroundColor red -NoNewline
                         Write-Host "$name$PSItem"'in'$n
                     }
@@ -656,7 +657,7 @@ function extract ($counts, $method, $name, $helper, $add, $patch) {
                 $reader = New-Object System.IO.StreamReader($file.Open())
             }
             if ($method -eq "nonezip") {
-                $file = get-item $env:APPDATA\Spotify\Apps\xpui\$name
+                $file = Get-Item $env:APPDATA\Spotify\Apps\xpui\$name
                 $reader = New-Object -TypeName System.IO.StreamReader -ArgumentList $file
             }
             $xpui = $reader.ReadToEnd()
@@ -666,7 +667,7 @@ function extract ($counts, $method, $name, $helper, $add, $patch) {
             if ($method -eq "nonezip") { $writer = New-Object System.IO.StreamWriter -ArgumentList $file }
             $writer.BaseStream.SetLength(0)
             $writer.Write($xpui)
-            if ($add) { $add | foreach { $writer.Write([System.Environment]::NewLine + $PSItem) } }
+            if ($add) { $add | ForEach-Object { $writer.Write([System.Environment]::NewLine + $PSItem) } }
             $writer.Close()
             if ($method -eq "zip") { $zip.Dispose() }
         }
@@ -674,7 +675,7 @@ function extract ($counts, $method, $name, $helper, $add, $patch) {
             Add-Type -Assembly 'System.IO.Compression.FileSystem'
             $xpui_spa_patch = Join-Path (Join-Path $env:APPDATA 'Spotify\Apps') 'xpui.spa'
             $zip = [System.IO.Compression.ZipFile]::Open($xpui_spa_patch, 'update')
-            $zip.Entries | Where-Object { $_.FullName -like $name -and $_.FullName.Split('/') -notcontains 'spotx-helper' } | foreach {
+            $zip.Entries | Where-Object { $_.FullName -like $name -and $_.FullName.Split('/') -notcontains 'spotx-helper' } | ForEach-Object {
                 $reader = New-Object System.IO.StreamReader($_.Open())
                 $xpui = $reader.ReadToEnd()
                 $reader.Close()
@@ -724,7 +725,7 @@ function injection {
             $fileContent = $FileContents[$i]
 
             $entry = $archive.GetEntry($folderPathInArchive + $fileName)
-            if ($entry -eq $null) {
+            if ($null -eq $entry) {
                 $stream = $archive.CreateEntry($folderPathInArchive + $fileName).Open()
             }
             else {
@@ -739,7 +740,7 @@ function injection {
         }
 
         $indexEntry = $archive.Entries | Where-Object { $_.FullName -eq "index.html" }
-        if ($indexEntry -ne $null) {
+        if ($null -ne $indexEntry) {
             $indexStream = $indexEntry.Open()
             $reader = [System.IO.StreamReader]::new($indexStream)
             $indexContent = $reader.ReadToEnd()
@@ -780,7 +781,7 @@ function injection {
         }
     }
     finally {
-        if ($archive -ne $null) {
+        if ($null -ne $archive) {
             $archive.Dispose()
         }
     }
@@ -789,7 +790,7 @@ function injection {
 function Remove-Spicetify {
     Write-Host "Uninstalling Spicetify..." -ForegroundColor Yellow
     try {
-        spicetify restore
+        spicetify restore --bypass-admin v
         Remove-Item -Path "$env:LOCALAPPDATA\spicetify" -Recurse -Force -ErrorAction SilentlyContinue
         [Environment]::SetEnvironmentVariable('PATH', ($env:PATH -replace ";$([regex]::Escape("$env:LOCALAPPDATA\spicetify"))"), [EnvironmentVariableTarget]::User)
         Write-Host "Spicetify uninstalled successfully." -ForegroundColor Green
@@ -842,10 +843,10 @@ function Show-Error ($message) {
     Write-Host -Object " > $($message)" -ForegroundColor Red
 }
 
-function Spicetify-Apply {
+function Invoke-SpicetifyApply {
     try {
-        spicetify apply
-		spicetify backup apply
+        spicetify apply --bypass-admin v
+		spicetify backup apply --bypass-admin v
         Show-Status "Spicetify apply configured."
     } catch {
         Show-Error "Failed to configure spicetify apply."
@@ -854,12 +855,12 @@ function Spicetify-Apply {
     Clear-Host
 }
 
-function Spicetify-Update {
+function Invoke-SpicetifyUpdate {
     try {
-		spicetify update
-        spicetify restore backup apply
-		spicetify backup apply
-		spicetify apply
+		spicetify update --bypass-admin v
+        spicetify restore backup apply --bypass-admin v
+		spicetify backup apply --bypass-admin v
+		spicetify apply --bypass-admin v
         Show-Status "Spicetify update configured."
     } catch {
         Show-Error "Failed to configure spicetify update."
@@ -868,9 +869,9 @@ function Spicetify-Update {
     Clear-Host
 }
 
-function Spicetify-RestoreFn {
+function Invoke-SpicetifyRestore {
     try {
-        spicetify restore
+        spicetify restore --bypass-admin v
         Show-Status "Spicetify restore configured."
     } catch {
         Show-Error "Failed to configure spicetify restore."
@@ -881,7 +882,7 @@ function Spicetify-RestoreFn {
 
 function Install-Extension-LoopyLoop {
     try {
-        spicetify config extensions loopyLoop.js
+        spicetify config extensions loopyLoop.js --bypass-admin v
         Show-Status "LoopyLoop extension configured."
     } catch {
         Show-Error "Failed to configure LoopyLoop extension."
@@ -892,7 +893,7 @@ function Install-Extension-LoopyLoop {
 
 function Install-Extension-PopupLyrics {
     try {
-        spicetify config extensions popupLyrics.js
+        spicetify config extensions popupLyrics.js --bypass-admin v
         Show-Status "PopupLyrics extension configured."
     } catch {
         Show-Error "Failed to configure PopupLyrics extension."
@@ -903,7 +904,7 @@ function Install-Extension-PopupLyrics {
 
 function Install-Extension-ShufflePlus {
     try {
-        spicetify config extensions shuffle+.js
+        spicetify config extensions shuffle+.js --bypass-admin v
         Show-Status "ShufflePlus extension configured."
     } catch {
         Show-Error "Failed to configure ShufflePlus extension."
@@ -914,7 +915,7 @@ function Install-Extension-ShufflePlus {
 
 function Install-Extension-lyrics-plus {
     try {
-        spicetify config custom_apps lyrics-plus
+        spicetify config custom_apps lyrics-plus --bypass-admin v
         Show-Status "lyrics-plus extension configured."
     } catch {
         Show-Error "Failed to configure lyrics-plus extension."
@@ -925,7 +926,7 @@ function Install-Extension-lyrics-plus {
 
 function Install-Extension-new-releases {
     try {
-        spicetify config custom_apps new-releases
+        spicetify config custom_apps new-releases --bypass-admin v
         Show-Status "new-releases extension configured."
     } catch {
         Show-Error "Failed to configure new-releases extension."
@@ -951,7 +952,7 @@ function Install-Extension-HistoryInSidebar {
         Show-Status "Moving HistoryInSidebar to Spicetify CustomApps..."
         Move-Item -Path "$env:TEMP\history-in-sidebar" -Destination $customAppsPath -Force
 
-        spicetify config custom_apps history-in-sidebar
+        spicetify config custom_apps history-in-sidebar --bypass-admin v
         Show-Status "HistoryInSidebar extension configured."
     } catch {
         Show-Error "Failed to download or configure HistoryInSidebar extension."
@@ -970,7 +971,7 @@ function Install-AllExtensions {
     Install-Extension-new-releases
     Install-Extension-HistoryInSidebar
 
-    spicetify apply
+    spicetify apply --bypass-admin v
     Show-Status "All extensions installed and configurations applied."
     pause
     Clear-Host
@@ -1006,7 +1007,9 @@ $mirror = $false
 $onlineFull = "1.2.57.463.g4f748c64-3096"
 $online = ($onlineFull -split ".g")[0]
 $langCode = 'en'
-$lang = CallLang -clg $langCode
+#$lang = CallLang -clg $langCode # Language selection removed
+# Default language set to English (en)
+$lang = CallLang -clg 'en' # Setting default language to en
 
 $os = Get-CimInstance -ClassName "Win32_OperatingSystem" -ErrorAction SilentlyContinue
 if ($os) {
@@ -1024,9 +1027,9 @@ $win11 = $win_os -match "\windows 11\b"
 $win10 = $win_os -match "\windows 10\b"
 $win8_1 = $win_os -match "\windows 8.1\b"
 $win8 = $win_os -match "\windows 8\b"
-$win7 = $win_os -match "\windows 7\b"
+#$win7 = $win_os -match "\windows 7\b" # Unused variable removed
 
-$old_os = $win7 -or $win8 -or $win8_1
+#$old_os = $win7 -or $win8 -or $win8_1 # Unused variable removed
 
 $devtools = $false
 $podcasts_off = $true
@@ -1040,7 +1043,7 @@ $confirm_spoti_recomended_over = $false
 $confirm_spoti_recomended_uninstall = $false
 $premium = $false
 $DisableStartup = $false
-$start_spoti = $false
+#$start_spoti = $false # Unused variable removed
 $exp_spotify = $false
 $topsearchbar = $false
 $homesub_off = $false
@@ -1058,8 +1061,8 @@ $lyrics_stat = $null
 $urlform_goofy = $null
 $idbox_goofy = $null
 $err_ru = $false
-$language = $null
-$not_block_update = !($block_update_on)
+#$language = $null # Unused variable removed
+$not_block_update = -not ($block_update_on) # Corrected and used later
 $podcast_off = $podcasts_off
 
 $webjson = $null
@@ -1079,7 +1082,7 @@ function Show-InstallSpotifyMenu {
     Clear-Host
     while ($true) {
         Write-Host "========= Install Spotify Menu =========" -ForegroundColor Cyan
-        Write-Host "1. Install Spotify" -ForegroundColor White
+        Write-Host "1. Spotify" -ForegroundColor White
         Write-Host "2. Uninstall Spotify" -ForegroundColor White
         Write-Host "3. Back to Main Menu" -ForegroundColor White
         Write-Host "=====================================" -ForegroundColor Cyan
@@ -1178,15 +1181,15 @@ function Show-InstallSpicetifyMenu {
             }
             "3" {
                 Write-Host "Option 3 selected: Spicetify Fix not working..." -ForegroundColor Yellow
-                Spicetify-Apply
+                Invoke-SpicetifyApply
             }
             "4" {
                 Write-Host "Option 4 selected: Spicetify Update..." -ForegroundColor Yellow
-                Spicetify-Update
+                Invoke-SpicetifyUpdate
             }
             "5" {
                 Write-Host "Option 5 selected: Spicetify Restore (Disable Spicetify)..." -ForegroundColor Yellow
-                Spicetify-RestoreFn
+                Invoke-SpicetifyRestore
             }
             "6" {
                 Show-SpicetifyExtensionsMenu
@@ -1274,7 +1277,7 @@ function Show-InstallSpicetifyMenu_Install {
 
         $Host.UI.RawUI.Flushinputbuffer()
         $choices = @( (New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", "Install Spicetify Marketplace."), (New-Object System.Management.Automation.Host.ChoiceDescription "&No", "Do not install Spicetify Marketplace.") )
-        $choice = $Host.UI.PromptForChoice('', "`nDo you also want to install Spicetify Marketplace? It will become available within the Spotify client, where you can easily install themes and extensions.", $choices, 0)
+        $choice = $Host.UI.PromptForChoice('', "`nDo you also want to install Spicetify Marketplace? It will become available within the Spotify Marketplace, where you can easily install themes and extensions.", $choices, 0)
         if ($choice -eq 1) {
           Write-Host -Object 'spicetify Marketplace installation aborted' -ForegroundColor 'Yellow'
         }
@@ -1388,16 +1391,16 @@ function Show-InstallSpotXMenu_Install {
         #region SpotX Installation Logic (from Option 3 in previous Main Menu)
         #region SpotX Installation Logic (from SpotX.txt, adapted)
 
-        Kill-Spotify
+        Stop-Spotify
 
         if ($win10 -or $win11 -or $win8_1 -or $win8 -or $win12) {
             if (Get-AppxPackage -Name SpotifyAB.SpotifyMusic) {
                 Write-Host ($lang).MsSpoti`n
-                if (!($confirm_uninstall_ms_spoti)) {
+                if (-not ($confirm_uninstall_ms_spoti)) {
                     do {
                         $ch = Read-Host -Prompt ($lang).MsSpoti2
                         Write-Host
-                        if (!($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
+                        if (-not ($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
                     }
                     while ($ch -notmatch '^y$|^n$')
                 }
@@ -1405,7 +1408,7 @@ function Show-InstallSpotXMenu_Install {
                 if ($ch -eq 'y') {
                     $ProgressPreference = 'SilentlyContinue'
                     if ($confirm_uninstall_ms_spoti) { Write-Host ($lang).MsSpoti3`n }
-                    if (!($confirm_uninstall_ms_spoti)) { Write-Host ($lang).MsSpoti4`n }
+                    if (-not ($confirm_uninstall_ms_spoti)) { Write-Host ($lang).MsSpoti4`n }
                     Get-AppxPackage -Name SpotifyAB.SpotifyMusic | Remove-AppxPackage
                 }
                 if ($ch -eq 'n') { Read-Host ($lang).StopScript; Pause; Exit }
@@ -1454,8 +1457,8 @@ function Show-InstallSpotXMenu_Install {
 
         if ($spotifyInstalled) {
             $offline = (Get-Item $spotifyExecutable).VersionInfo.FileVersion
-            $arr1 = $online -split '\.' | foreach { [int]$_ }
-            $arr2 = $offline -split '\.' | foreach { [int]$_ }
+            $arr1 = $online -split '\.' | ForEach-Object { [int]$_ }
+            $arr2 = $offline -split '\.' | ForEach-Object { [int]$_ }
 
             for ($i = 0; $i -lt $arr1.Length; $i++) {
                 if ($arr1[$i] -gt $arr2[$i]) { $oldversion = $true; break }
@@ -1464,23 +1467,23 @@ function Show-InstallSpotXMenu_Install {
 
             if ($oldversion) {
                 if ($confirm_spoti_recomended_over -or $confirm_spoti_recomended_uninstall) { Write-Host ($lang).OldV`n }
-                if (!($confirm_spoti_recomended_over) -and !($confirm_spoti_recomended_uninstall)) {
+                if (-not ($confirm_spoti_recomended_over) -and -not ($confirm_spoti_recomended_uninstall)) {
                     do {
                         Write-Host (($lang).OldV2 -f $offline, $online)
                         $ch = Read-Host -Prompt ($lang).OldV3
                         Write-Host
-                        if (!($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
+                        if (-not ($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
                     }
                     while ($ch -notmatch '^y$|^n$')
                 }
                 if ($confirm_spoti_recomended_over -or $confirm_spoti_recomended_uninstall) { $ch = 'y'; Write-Host ($lang).AutoUpd`n }
                 if ($ch -eq 'y') {
                     $upgrade_client = $true
-                    if (!($confirm_spoti_recomended_over) -and !($confirm_spoti_recomended_uninstall)) {
+                    if (-not ($confirm_spoti_recomended_over) -and -not ($confirm_spoti_recomended_uninstall)) {
                         do {
                             $ch = Read-Host -Prompt (($lang).DelOrOver -f $offline)
                             Write-Host
-                            if (!($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
+                            if (-not ($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
                         }
                         while ($ch -notmatch '^y$|^n$')
                     }
@@ -1490,7 +1493,7 @@ function Show-InstallSpotXMenu_Install {
                         Write-Host ($lang).DelOld`n
                         $null = Unlock-Folder
                         cmd /c $spotifyExecutable /UNINSTALL /SILENT
-                        wait-process -name SpotifyUninstall
+                        Wait-Process -name SpotifyUninstall
                         Start-Sleep -Milliseconds 200
                         if (Test-Path $spotifyDirectory) { Remove-Item -Recurse -Force -LiteralPath $spotifyDirectory }
                         if (Test-Path $spotifyDirectory2) { Remove-Item -Recurse -Force -LiteralPath $spotifyDirectory2 }
@@ -1505,9 +1508,9 @@ function Show-InstallSpotXMenu_Install {
                 try {
                     $country = [System.Globalization.RegionInfo]::CurrentRegion.EnglishName
                     $txt = [IO.File]::ReadAllText($spotifyExecutable)
-                    $regex = "(?<![\w\-])(\d+)\.(\d+)\.(\d+)\.(\d+)(\.g[0-9a-f]{8})(?![\w\-])"
-                    $matches = [regex]::Matches($txt, $regex)
-                    $ver = $matches[0].Value
+                    $versionRegex = "(?<![\w\-])(\d+)\.(\d+)\.(\d+)\.(\d+)(\.g[0-9a-f]{8})(?![\w\-])" # Renamed variable
+                    $versionMatches = [regex]::Matches($txt, $versionRegex) # Renamed variable
+                    $ver = $versionMatches[0].Value # Renamed variable
 
                     $Parameters = @{
                         Uri    = 'https://docs.google.com/forms/d/e/1FAIpQLSegGsAgilgQ8Y36uw-N7zFF6Lh40cXNfyl1ecHPpZcpD8kdHg/formResponse'
@@ -1525,23 +1528,23 @@ function Show-InstallSpotXMenu_Install {
                 catch { Write-Host 'Unable to submit new version of Spotify' ; Write-Host "error description: "$Error[0]; Write-Host }
 
                 if ($confirm_spoti_recomended_over -or $confirm_spoti_recomended_uninstall) { Write-Host ($lang).NewV`n }
-                if (!($confirm_spoti_recomended_over) -and !($confirm_spoti_recomended_uninstall)) {
+                if (-not ($confirm_spoti_recomended_over) -and -not ($confirm_spoti_recomended_uninstall)) {
                     do {
                         Write-Host (($lang).NewV2 -f $offline, $online)
                         $ch = Read-Host -Prompt (($lang).NewV3 -f $offline)
                         Write-Host
-                        if (!($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
+                        if (-not ($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
                     }
                     while ($ch -notmatch '^y$|^n$')
                 }
                 if ($confirm_spoti_recomended_over -or $confirm_spoti_recomended_uninstall) { $ch = 'n' }
                 if ($ch -eq 'y') { $upgrade_client = $false }
                 if ($ch -eq 'n') {
-                    if (!($confirm_spoti_recomended_over) -and !($confirm_spoti_recomended_uninstall)) {
+                    if (-not ($confirm_spoti_recomended_over) -and -not ($confirm_spoti_recomended_uninstall)) {
                         do {
                             $ch = Read-Host -Prompt (($lang).Recom -f $online)
                             Write-Host
-                            if (!($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
+                            if (-not ($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
                         }
                         while ($ch -notmatch '^y$|^n$')
                     }
@@ -1549,11 +1552,11 @@ function Show-InstallSpotXMenu_Install {
                     if ($ch -eq 'y') {
                         $upgrade_client = $true
                         $downgrading = $true
-                        if (!($confirm_spoti_recomended_over) -and !($confirm_spoti_recomended_uninstall)) {
+                        if (-not ($confirm_spoti_recomended_over) -and -not ($confirm_spoti_recomended_uninstall)) {
                             do {
                                 $ch = Read-Host -Prompt (($lang).DelOrOver -f $offline)
                                 Write-Host
-                                if (!($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
+                                if (-not ($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
                             }
                             while ($ch -notmatch '^y$|^n$')
                         }
@@ -1563,7 +1566,7 @@ function Show-InstallSpotXMenu_Install {
                             Write-Host ($lang).DelNew`n
                             $null = Unlock-Folder
                             cmd /c $spotifyExecutable /UNINSTALL /SILENT
-                            wait-process -name SpotifyUninstall
+                            Wait-Process -name SpotifyUninstall
                             Start-Sleep -Milliseconds 200
                             if (Test-Path $spotifyDirectory) { Remove-Item -Recurse -Force -LiteralPath $spotifyDirectory }
                             if (Test-Path $spotifyDirectory2) { Remove-Item -Recurse -Force -LiteralPath $spotifyDirectory2 }
@@ -1591,7 +1594,7 @@ function Show-InstallSpotXMenu_Install {
             Write-Host ($lang).DownSpoti2`n
 
             $ErrorActionPreference = 'SilentlyContinue'
-            Kill-Spotify
+            Stop-Spotify
             Start-Sleep -Milliseconds 600
             $null = Unlock-Folder
             Start-Sleep -Milliseconds 200
@@ -1604,9 +1607,9 @@ function Show-InstallSpotXMenu_Install {
             Start-Sleep -Milliseconds 200
 
             Start-Process -FilePath explorer.exe -ArgumentList "$PWD\SpotifySetup.exe" -Wait
-            while (-not (get-process | Where-Object { $_.ProcessName -eq 'SpotifySetup' })) { }
-            wait-process -name SpotifySetup
-            Kill-Spotify
+            while (-not (Get-Process | Where-Object { $_.ProcessName -eq 'SpotifySetup' })) { }
+            Wait-Process -name SpotifySetup
+            Stop-Spotify
 
             $offline = (Get-Item $spotifyExecutable).VersionInfo.FileVersion
             $offline_bak = (Get-Item $exe_bak).VersionInfo.FileVersion
@@ -1616,23 +1619,23 @@ function Show-InstallSpotXMenu_Install {
             $ErrorActionPreference = 'SilentlyContinue'
             $desktop_folder = DesktopFolder
             Start-Sleep -Milliseconds 1000
-            remove-item "$desktop_folder\Spotify.lnk" -Recurse -Force
+            Remove-Item "$desktop_folder\Spotify.lnk" -Recurse -Force
         }
 
         $ch = $null
 
         if ($langCode -eq 'ru' -and [version]$offline -ge [version]"1.1.92.644") {
-            $webjsonru = Get -Url (Get-Link -e "/patches/Augmented%20translation/ru.json")
-            if ($webjsonru -ne $null) { $ru = $true }
+            $webjsonru = Get-WebData -Url (Get-Link -e "/patches/Augmented%20translation/ru.json")
+            if ($null -ne $webjsonru) { $ru = $true }
         }
 
         if ($podcasts_off) { Write-Host ($lang).PodcatsOff`n ; $ch = 'y' }
         if ($podcasts_on) { Write-Host ($lang).PodcastsOn`n ; $ch = 'n' }
-        if (!($podcasts_off) -and !($podcasts_on)) {
+        if (-not ($podcasts_off) -and -not ($podcasts_on)) {
             do {
                 $ch = Read-Host -Prompt ($lang).PodcatsSelect
                 Write-Host
-                if (!($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
+                if (-not ($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
             }
             while ($ch -notmatch '^y$|^n$')
         }
@@ -1645,18 +1648,18 @@ function Show-InstallSpotXMenu_Install {
 
         if ($block_update_on) { Write-Host ($lang).UpdBlock`n ; $ch = 'y' }
         if ($block_update_off) { Write-Host ($lang).UpdUnblock`n ; $ch = 'n' }
-        if (!($block_update_on) -and !($block_update_off)) {
+        if (-not ($block_update_on) -and -not ($block_update_off)) {
             do {
                 $text_upd = [string]($lang).UpdSelect + $upd
                 $ch = Read-Host -Prompt $text_upd
                 Write-Host
-                if (!($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
+                if (-not ($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
             }
             while ($ch -notmatch '^y$|^n$')
         }
         if ($ch -eq 'y') { $not_block_update = $false }
 
-        if (!($new_theme) -and [version]$offline -ge [version]"1.2.14.1141") {
+        if (-not $new_theme -and [version]$offline -ge [version]"1.2.14.1141") {
             Write-Warning "This version does not support the old theme, use version 1.2.13.661 or below"
             Write-Host
         }
@@ -1672,9 +1675,9 @@ function Show-InstallSpotXMenu_Install {
 
         $ch = $null
 
-        $webjson = Get -Url (Get-Link -e "/patches/patches.json") -RetrySeconds 5
+        $webjson = Get-WebData -Url (Get-Link -e "/patches/patches.json") -RetrySeconds 5
 
-        if ($webjson -eq $null) {
+        if ($null -eq $webjson) {
             Write-Host; Write-Host "Failed to get patches.json" -ForegroundColor Red; Write-Host ($lang).StopScript
             $tempDirectory = $PWD; Pop-Location; Start-Sleep -Milliseconds 200; Remove-Item -Recurse -LiteralPath $tempDirectory
             Pause; exit
@@ -1698,7 +1701,7 @@ function Show-InstallSpotXMenu_Install {
             do {
                 $ch = Read-Host -Prompt ($lang).Spicetify
                 Write-Host
-                if (!($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
+                if (-not ($ch -eq 'n' -or $ch -eq 'y')) { incorrectValue }
             }
             while ($ch -notmatch '^y$|^n$')
 
@@ -1707,7 +1710,7 @@ function Show-InstallSpotXMenu_Install {
             Write-Host ($lang).StopScript; Pause; exit
         }
 
-        if (!($test_js) -and !($test_spa)) {
+        if (-not $test_js -and -not $test_spa) {
             Write-Host "xpui.spa not found, reinstall Spotify"; Write-Host ($lang).StopScript; Pause; exit
         }
 
@@ -1753,33 +1756,33 @@ function Show-InstallSpotXMenu_Install {
                 $mode = [IO.Compression.ZipArchiveMode]::Update
                 $zip_xpui = New-Object IO.Compression.ZipArchive($stream, $mode)
 
-                ($zip_xpui.Entries | Where-Object { $_.FullName -match "i18n" -and $_.FullName -inotmatch "(ru|en.json|longest)" }) | foreach { $_.Delete() }
+                ($zip_xpui.Entries | Where-Object { $_.FullName -match "i18n" -and $_.FullName -inotmatch "(ru|en.json|longest)" }) | ForEach-Object { $_.Delete() }
 
                 $zip_xpui.Dispose()
                 $stream.Close()
                 $stream.Dispose()
             }
 
-            if (!($premium)) {
+            if (-not $premium) {
                 extract -counts 'one' -method 'zip' -name 'xpui.js' -helper 'OffadsonFullscreen'
             }
 
             extract -counts 'one' -method 'zip' -name 'xpui.js' -helper 'ForcedExp' -add $webjson.others.byspotx.add
 
             if ($podcast_off -or $adsections_off) {
-                $section = Get -Url (Get-Link -e "/js-helper/sectionBlock.js")
-                if ($section -ne $null) { injection -p $xpui_spa_patch -f "spotx-helper" -n "sectionBlock.js" -c $section }
+                $section = Get-WebData -Url (Get-Link -e "/js-helper/sectionBlock.js")
+                if ($null -ne $section) { injection -p $xpui_spa_patch -f "spotx-helper" -n "sectionBlock.js" -c $section }
                 else { $podcast_off, $adsections_off = $false }
             }
 
             if ($urlform_goofy -and $idbox_goofy) {
-                $goofy = Get -Url (Get-Link -e "/js-helper/goofyHistory.js")
-                if ($goofy -ne $null) { injection -p $xpui_spa_patch -f "spotx-helper" -n "goofyHistory.js" -c $goofy }
+                $goofy = Get-WebData -Url (Get-Link -e "/js-helper/goofyHistory.js")
+                if ($null -ne $goofy) { injection -p $xpui_spa_patch -f "spotx-helper" -n "goofyHistory.js" -c $goofy }
             }
 
             if ($lyrics_stat) {
-                $rulesContent = Get -Url (Get-Link -e "/css-helper/lyrics-color/rules.css")
-                $colorsContent = Get -Url (Get-Link -e "/css-helper/lyrics-color/colors.css")
+                $rulesContent = Get-WebData -Url (Get-Link -e "/css-helper/lyrics-color/rules.css")
+                $colorsContent = Get-WebData -Url (Get-Link -e "/css-helper/lyrics-color/colors.css")
 
                 $colorsContent = $colorsContent -replace '{{past}}', "$($webjson.others.themelyrics.theme.$lyrics_stat.pasttext)"
                 $colorsContent = $colorsContent -replace '{{current}}', "$($webjson.others.themelyrics.theme.$lyrics_stat.current)"
@@ -1796,7 +1799,7 @@ function Show-InstallSpotXMenu_Install {
                 extract -counts 'one' -method 'zip' -name 'xpui-routes-desktop-settings.js' -helper 'Dev'
             }
 
-            if (!($hide_col_icon_off) -and !($exp_spotify)) {
+            if (-not $hide_col_icon_off -and -not $exp_spotify) {
                 extract -counts 'one' -method 'zip' -name 'xpui-routes-playlist.js' -helper 'Collaborators'
             }
 
@@ -1809,7 +1812,7 @@ function Show-InstallSpotXMenu_Install {
 
             extract -counts 'more' -name '*.js' -helper 'MinJs'
 
-            if (!($premium)) {
+            if (-not $premium) {
                 if ([version]$offline -ge [version]"1.2.30.1135") { $css += $webjson.others.downloadquality.add }
                 $css += $webjson.others.downloadicon.add
                 $css += $webjson.others.submenudownload.add
@@ -1821,7 +1824,6 @@ function Show-InstallSpotXMenu_Install {
 
             if ($null -ne $css ) { extract -counts 'one' -method 'zip' -name 'xpui.css' -add $css }
 
-            $contents = "fix-old-theme"
             extract -counts 'one' -method 'zip' -name 'xpui.css' -helper "FixCss"
 
             extract -counts 'more' -name '*.css' -helper 'Cssmin'
@@ -1842,10 +1844,10 @@ function Show-InstallSpotXMenu_Install {
 
         $ErrorActionPreference = 'SilentlyContinue'
 
-        if (!($no_shortcut)) {
+        if (-not $no_shortcut) {
             $desktop_folder = DesktopFolder
 
-            If (!(Test-Path $desktop_folder\Spotify.lnk)) {
+            If (-not (Test-Path $desktop_folder\Spotify.lnk)) {
                 $source = Join-Path $env:APPDATA 'Spotify\Spotify.exe'
                 $target = "$desktop_folder\Spotify.lnk"
                 $WorkingDir = "$env:APPDATA\Spotify"
@@ -1857,7 +1859,7 @@ function Show-InstallSpotXMenu_Install {
             }
         }
 
-        If (!(Test-Path $start_menu)) {
+        If (-not (Test-Path $start_menu)) {
             $source = Join-Path $env:APPDATA 'Spotify\Spotify.exe'
             $target = $start_menu
             $WorkingDir = "$env:APPDATA\Spotify"
@@ -1871,25 +1873,25 @@ function Show-InstallSpotXMenu_Install {
         $ANSI = [Text.Encoding]::GetEncoding(1251)
         $old = [IO.File]::ReadAllText($spotifyExecutable, $ANSI)
 
-        $regex1 = $old -notmatch $webjson.others.binary.block_update.add
-        $regex2 = $old -notmatch $webjson.others.binary.block_slots.add
-        $regex3 = $old -notmatch $webjson.others.binary.block_slots_2.add
-        $regex4 = $old -notmatch $webjson.others.binary.block_slots_3.add
-        $regex5 = $old -notmatch $webjson.others.binary.block_gabo.add
+        $regex1 = -not ($old -match $webjson.others.binary.block_update.add)
+        $regex2 = -not ($old -match $webjson.others.binary.block_slots.add)
+        $regex3 = -not ($old -match $webjson.others.binary.block_slots_2.add)
+        $regex4 = -not ($old -match $webjson.others.binary.block_slots_3.add)
+        $regex5 = -not ($old -match $webjson.others.binary.block_gabo.add)
 
         if ($regex1 -and $regex2 -and $regex3 -and $regex4 -and $regex5) {
             if (Test-Path -LiteralPath $exe_bak) {
                 Remove-Item $exe_bak -Recurse -Force
                 Start-Sleep -Milliseconds 150
             }
-            copy-Item $spotifyExecutable $exe_bak
+            Copy-Item $spotifyExecutable $exe_bak
         }
 
         extract -counts 'exe' -helper 'Binary'
 
         if ([version]$offline -ge [version]"1.1.87.612" -and [version]$offline -le [version]"1.2.5.1006") {
             $login_spa = Join-Path (Join-Path $env:APPDATA 'Spotify\Apps') 'login.spa'
-            Get -Url (Get-Link -e "/res/login.spa") -OutputPath $login_spa
+            Get-WebData -Url (Get-Link -e "/res/login.spa") -OutputPath $login_spa
         }
 
         if ($DisableStartup) {
