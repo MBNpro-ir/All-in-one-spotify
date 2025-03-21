@@ -1013,8 +1013,8 @@ function Remove-Spicetify {
 
 function Invoke-SpicetifyApply {
     try {
-        spicetify apply --bypass-admin v
-		spicetify backup apply --bypass-admin v
+        spicetify apply --bypass-admin
+		spicetify backup apply --bypass-admin
         Show-Status "Spicetify apply configured."
     } catch {
         Show-Error "Failed to configure spicetify apply."
@@ -1025,10 +1025,10 @@ function Invoke-SpicetifyApply {
 
 function Invoke-SpicetifyUpdate {
     try {
-		spicetify update --bypass-admin v
-        spicetify restore backup apply --bypass-admin v
-		spicetify backup apply --bypass-admin v
-		spicetify apply --bypass-admin v
+		spicetify update --bypass-admin
+        spicetify restore backup apply --bypass-admin
+		spicetify backup apply --bypass-admin
+		spicetify apply --bypass-admin
         Show-Status "Spicetify update configured."
     } catch {
         Show-Error "Failed to configure spicetify update."
@@ -1039,7 +1039,7 @@ function Invoke-SpicetifyUpdate {
 
 function Invoke-SpicetifyRestore {
     try {
-        spicetify restore --bypass-admin v
+        spicetify restore --bypass-admin
         Show-Status "Spicetify restore configured."
     } catch {
         Show-Error "Failed to configure spicetify restore."
@@ -1050,7 +1050,7 @@ function Invoke-SpicetifyRestore {
 
 function Install-Extension-LoopyLoop {
     try {
-        spicetify config extensions loopyLoop.js --bypass-admin v
+        spicetify config extensions loopyLoop.js --bypass-admin
         Show-Status "LoopyLoop extension configured."
     } catch {
         Show-Error "Failed to configure LoopyLoop extension."
@@ -1061,7 +1061,7 @@ function Install-Extension-LoopyLoop {
 
 function Install-Extension-PopupLyrics {
     try {
-        spicetify config extensions popupLyrics.js --bypass-admin v
+        spicetify config extensions popupLyrics.js --bypass-admin
         Show-Status "PopupLyrics extension configured."
     } catch {
         Show-Error "Failed to configure PopupLyrics extension."
@@ -1072,7 +1072,7 @@ function Install-Extension-PopupLyrics {
 
 function Install-Extension-ShufflePlus {
     try {
-        spicetify config extensions shuffle+.js --bypass-admin v
+        spicetify config extensions shuffle+.js --bypass-admin
         Show-Status "ShufflePlus extension configured."
     } catch {
         Show-Error "Failed to configure ShufflePlus extension."
@@ -1083,7 +1083,7 @@ function Install-Extension-ShufflePlus {
 
 function Install-Extension-lyrics-plus {
     try {
-        spicetify config custom_apps lyrics-plus --bypass-admin v
+        spicetify config custom_apps lyrics-plus --bypass-admin
         Show-Status "lyrics-plus extension configured."
     } catch {
         Show-Error "Failed to configure lyrics-plus extension."
@@ -1094,7 +1094,7 @@ function Install-Extension-lyrics-plus {
 
 function Install-Extension-new-releases {
     try {
-        spicetify config custom_apps new-releases --bypass-admin v
+        spicetify config custom_apps new-releases --bypass-admin
         Show-Status "new-releases extension configured."
     } catch {
         Show-Error "Failed to configure new-releases extension."
@@ -1120,7 +1120,7 @@ function Install-Extension-HistoryInSidebar {
         Show-Status "Moving HistoryInSidebar to Spicetify CustomApps..."
         Move-Item -Path "$env:TEMP\history-in-sidebar" -Destination $customAppsPath -Force
 
-        spicetify config custom_apps history-in-sidebar --bypass-admin v
+        spicetify config custom_apps history-in-sidebar --bypass-admin
         Show-Status "HistoryInSidebar extension configured."
     } catch {
         Show-Error "Failed to download or configure HistoryInSidebar extension."
@@ -1139,7 +1139,7 @@ function Install-AllExtensions {
     Install-Extension-new-releases
     Install-Extension-HistoryInSidebar
 
-    spicetify apply --bypass-admin v
+    spicetify apply --bypass-admin
     Show-Status "All extensions installed and configurations applied."
     pause
     Clear-Host
